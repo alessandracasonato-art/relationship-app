@@ -30,9 +30,103 @@ const ANSWER_OPTIONS = [
   { value: 5, label: 'Completamente' },
 ];
 
+// Introduction component
+function Introduction({ onStart }: { onStart: () => void }) {
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.introContent}>
+        <View style={styles.introHeader}>
+          <View style={styles.introIconContainer}>
+            <Ionicons name="compass-outline" size={48} color={Colors.primary} />
+          </View>
+          <Text style={styles.introTitle}>Il tuo percorso di consapevolezza</Text>
+          <Text style={styles.introSubtitle}>
+            Questo strumento ti guiderà attraverso un percorso di riflessione sulle tue relazioni.
+          </Text>
+        </View>
+
+        <View style={styles.phasesContainer}>
+          <Text style={styles.phasesTitle}>Le tre fasi del percorso</Text>
+          
+          <View style={styles.phaseCard}>
+            <View style={styles.phaseNumber}>
+              <Text style={styles.phaseNumberText}>1</Text>
+            </View>
+            <View style={styles.phaseContent}>
+              <Text style={styles.phaseTitle}>Profilo Relazionale Personale</Text>
+              <Text style={styles.phaseDescription}>
+                Scopri il tuo stile relazionale attraverso domande su comunicazione, bisogni emotivi, aspettative, gestione dei conflitti e confini personali.
+              </Text>
+              <View style={styles.phaseInfo}>
+                <Ionicons name="time-outline" size={14} color={Colors.textMuted} />
+                <Text style={styles.phaseInfoText}>~10 minuti • 17 domande</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.phaseCard}>
+            <View style={[styles.phaseNumber, styles.phaseNumberInactive]}>
+              <Text style={[styles.phaseNumberText, styles.phaseNumberTextInactive]}>2</Text>
+            </View>
+            <View style={styles.phaseContent}>
+              <Text style={[styles.phaseTitle, styles.phaseTitleInactive]}>Analisi della Relazione</Text>
+              <Text style={styles.phaseDescription}>
+                Analizza una specifica relazione attraverso 5 aree tematiche e ricevi un indice di compatibilità.
+              </Text>
+              <View style={styles.phaseInfo}>
+                <Ionicons name="time-outline" size={14} color={Colors.textMuted} />
+                <Text style={styles.phaseInfoText}>~15 minuti • 25 domande</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.phaseCard}>
+            <View style={[styles.phaseNumber, styles.phaseNumberInactive]}>
+              <Text style={[styles.phaseNumberText, styles.phaseNumberTextInactive]}>3</Text>
+            </View>
+            <View style={styles.phaseContent}>
+              <Text style={[styles.phaseTitle, styles.phaseTitleInactive]}>Monitoraggio nel Tempo</Text>
+              <Text style={styles.phaseDescription}>
+                Osserva l'evoluzione della relazione attraverso check-in settimanali e visualizza i cambiamenti.
+              </Text>
+              <View style={styles.phaseInfo}>
+                <Ionicons name="time-outline" size={14} color={Colors.textMuted} />
+                <Text style={styles.phaseInfoText}>~2 minuti • settimanale</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.noteCard}>
+          <Ionicons name="information-circle-outline" size={22} color={Colors.primary} />
+          <Text style={styles.noteText}>
+            Non esistono risposte giuste o sbagliate. Rispondi in base a come ti senti realmente, non a come pensi dovresti sentirti. Le tue risposte sono private e serviranno solo per la tua riflessione personale.
+          </Text>
+        </View>
+
+        <View style={styles.currentPhaseCard}>
+          <Text style={styles.currentPhaseLabel}>Inizierai con</Text>
+          <Text style={styles.currentPhaseTitle}>Fase 1: Profilo Relazionale</Text>
+          <Text style={styles.currentPhaseDescription}>
+            Ti verranno poste 17 domande per comprendere il tuo stile relazionale. Prenditi il tempo necessario per riflettere su ogni domanda.
+          </Text>
+        </View>
+      </ScrollView>
+
+      <View style={styles.introFooter}>
+        <TouchableOpacity style={styles.startButton} onPress={onStart}>
+          <Text style={styles.startButtonText}>Inizia il questionario</Text>
+          <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
+
 export default function Phase1() {
   const router = useRouter();
   const { setUser, user } = useAuthStore();
+  const [showIntro, setShowIntro] = useState(true);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [responses, setResponses] = useState<Record<string, number>>({});
@@ -89,6 +183,11 @@ export default function Phase1() {
       setIsSubmitting(false);
     }
   };
+
+  // Show introduction first
+  if (showIntro) {
+    return <Introduction onStart={() => setShowIntro(false)} />;
+  }
 
   if (isLoading) {
     return (
@@ -225,6 +324,163 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  // Introduction styles
+  introContent: {
+    padding: 24,
+    paddingBottom: 100,
+  },
+  introHeader: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  introIconContainer: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: Colors.primary + '15',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  introTitle: {
+    ...Typography.h1,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  introSubtitle: {
+    ...Typography.body,
+    color: Colors.textLight,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  phasesContainer: {
+    marginBottom: 24,
+  },
+  phasesTitle: {
+    ...Typography.h3,
+    marginBottom: 16,
+  },
+  phaseCard: {
+    flexDirection: 'row',
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: Colors.cardShadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  phaseNumber: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  phaseNumberInactive: {
+    backgroundColor: Colors.border,
+  },
+  phaseNumberText: {
+    ...Typography.body,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  phaseNumberTextInactive: {
+    color: Colors.textMuted,
+  },
+  phaseContent: {
+    flex: 1,
+  },
+  phaseTitle: {
+    ...Typography.body,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  phaseTitleInactive: {
+    color: Colors.textLight,
+  },
+  phaseDescription: {
+    ...Typography.bodySmall,
+    color: Colors.textLight,
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  phaseInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  phaseInfoText: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+  },
+  noteCard: {
+    flexDirection: 'row',
+    backgroundColor: Colors.primary + '10',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    gap: 12,
+  },
+  noteText: {
+    ...Typography.bodySmall,
+    color: Colors.text,
+    flex: 1,
+    lineHeight: 20,
+  },
+  currentPhaseCard: {
+    backgroundColor: Colors.primary,
+    borderRadius: 20,
+    padding: 24,
+  },
+  currentPhaseLabel: {
+    ...Typography.caption,
+    color: '#FFFFFF',
+    opacity: 0.8,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  currentPhaseTitle: {
+    ...Typography.h2,
+    color: '#FFFFFF',
+    marginBottom: 12,
+  },
+  currentPhaseDescription: {
+    ...Typography.body,
+    color: '#FFFFFF',
+    opacity: 0.9,
+    lineHeight: 24,
+  },
+  introFooter: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 20,
+    paddingBottom: 32,
+    backgroundColor: Colors.background,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  startButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    paddingVertical: 16,
+    borderRadius: 12,
+    gap: 10,
+  },
+  startButtonText: {
+    ...Typography.button,
+    color: '#FFFFFF',
+  },
+  // Questionnaire styles
   header: {
     flexDirection: 'row',
     alignItems: 'center',
