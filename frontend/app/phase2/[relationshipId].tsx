@@ -32,6 +32,12 @@ interface Phase2Data {
   } | null;
 }
 
+interface Relationship {
+  id: string;
+  person_name: string;
+  relationship_type: string | null;
+}
+
 const ANSWER_OPTIONS = [
   { value: 1, label: 'Per niente' },
   { value: 2, label: 'Raramente' },
@@ -40,12 +46,134 @@ const ANSWER_OPTIONS = [
   { value: 5, label: 'Sempre' },
 ];
 
+const AREA_ICONS: Record<string, string> = {
+  comunicazione: 'chatbubbles-outline',
+  valori: 'heart-outline',
+  bisogni_emotivi: 'hand-left-outline',
+  conflitto: 'flash-outline',
+  visione: 'telescope-outline',
+};
+
+const AREA_DESCRIPTIONS: Record<string, string> = {
+  comunicazione: 'Come comunicate e vi ascoltate reciprocamente',
+  valori: 'I principi e le priorità che condividete',
+  bisogni_emotivi: 'Il supporto emotivo nella relazione',
+  conflitto: 'Come affrontate i disaccordi',
+  visione: 'Le aspettative sul futuro insieme',
+};
+
+// Introduction component for Phase 2
+function Phase2Introduction({ 
+  relationship, 
+  onStart 
+}: { 
+  relationship: Relationship | null;
+  onStart: () => void;
+}) {
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.introContent}>
+        <View style={styles.introHeader}>
+          <View style={styles.introIconContainer}>
+            <Ionicons name="analytics-outline" size={48} color={Colors.primary} />
+          </View>
+          <Text style={styles.introTitle}>Analisi della Relazione</Text>
+          {relationship && (
+            <View style={styles.relationshipBadge}>
+              <Ionicons name="person" size={16} color={Colors.primary} />
+              <Text style={styles.relationshipBadgeText}>{relationship.person_name}</Text>
+            </View>
+          )}
+          <Text style={styles.introSubtitle}>
+            Analizzerai la tua relazione attraverso 5 aree tematiche per comprendere meglio le dinamiche e ricevere un indice di compatibilità.
+          </Text>
+        </View>
+
+        <View style={styles.areasPreview}>
+          <Text style={styles.areasTitle}>Le 5 aree di analisi</Text>
+          
+          <View style={styles.areaPreviewCard}>
+            <View style={styles.areaPreviewIcon}>
+              <Ionicons name="chatbubbles-outline" size={24} color={Colors.primary} />
+            </View>
+            <View style={styles.areaPreviewContent}>
+              <Text style={styles.areaPreviewTitle}>1. Comunicazione</Text>
+              <Text style={styles.areaPreviewDesc}>Come comunicate e vi ascoltate</Text>
+            </View>
+          </View>
+
+          <View style={styles.areaPreviewCard}>
+            <View style={styles.areaPreviewIcon}>
+              <Ionicons name="heart-outline" size={24} color={Colors.primary} />
+            </View>
+            <View style={styles.areaPreviewContent}>
+              <Text style={styles.areaPreviewTitle}>2. Valori</Text>
+              <Text style={styles.areaPreviewDesc}>I principi che condividete</Text>
+            </View>
+          </View>
+
+          <View style={styles.areaPreviewCard}>
+            <View style={styles.areaPreviewIcon}>
+              <Ionicons name="hand-left-outline" size={24} color={Colors.primary} />
+            </View>
+            <View style={styles.areaPreviewContent}>
+              <Text style={styles.areaPreviewTitle}>3. Bisogni Emotivi</Text>
+              <Text style={styles.areaPreviewDesc}>Il supporto emotivo reciproco</Text>
+            </View>
+          </View>
+
+          <View style={styles.areaPreviewCard}>
+            <View style={styles.areaPreviewIcon}>
+              <Ionicons name="flash-outline" size={24} color={Colors.primary} />
+            </View>
+            <View style={styles.areaPreviewContent}>
+              <Text style={styles.areaPreviewTitle}>4. Gestione del Conflitto</Text>
+              <Text style={styles.areaPreviewDesc}>Come affrontate i disaccordi</Text>
+            </View>
+          </View>
+
+          <View style={styles.areaPreviewCard}>
+            <View style={styles.areaPreviewIcon}>
+              <Ionicons name="telescope-outline" size={24} color={Colors.primary} />
+            </View>
+            <View style={styles.areaPreviewContent}>
+              <Text style={styles.areaPreviewTitle}>5. Visione della Relazione</Text>
+              <Text style={styles.areaPreviewDesc}>Le aspettative sul futuro</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.noteCard}>
+          <Ionicons name="information-circle-outline" size={22} color={Colors.primary} />
+          <Text style={styles.noteText}>
+            Le aree si sbloccheranno in sequenza. Completa un'area per passare alla successiva. Al termine riceverai un indice di compatibilità e un piano di consapevolezza.
+          </Text>
+        </View>
+
+        <View style={styles.timeCard}>
+          <Ionicons name="time-outline" size={20} color={Colors.textMuted} />
+          <Text style={styles.timeText}>Tempo stimato: ~15 minuti (25 domande totali)</Text>
+        </View>
+      </ScrollView>
+
+      <View style={styles.introFooter}>
+        <TouchableOpacity style={styles.startButton} onPress={onStart}>
+          <Text style={styles.startButtonText}>Inizia l'analisi</Text>
+          <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
+
 export default function Phase2() {
   const router = useRouter();
   const { relationshipId } = useLocalSearchParams<{ relationshipId: string }>();
+  const [relationship, setRelationship] = useState<Relationship | null>(null);
   const [areas, setAreas] = useState<Record<string, Area>>({});
   const [areaOrder, setAreaOrder] = useState<string[]>([]);
   const [phase2Data, setPhase2Data] = useState<Phase2Data | null>(null);
+  const [showIntro, setShowIntro] = useState(true);
   const [currentAreaId, setCurrentAreaId] = useState<string | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [responses, setResponses] = useState<Record<string, number>>({});
@@ -55,24 +183,35 @@ export default function Phase2() {
 
   const fetchData = async () => {
     try {
-      const [areasRes, phase2Res] = await Promise.all([
+      const [areasRes, phase2Res, relRes] = await Promise.all([
         api.get('/phase2/areas'),
-        api.get(`/phase2/${relationshipId}`),
+        api.get(`/phase2/${relationshipId}`).catch(() => ({ data: null })),
+        api.get('/relationships'),
       ]);
       
       setAreas(areasRes.data.areas);
       setAreaOrder(areasRes.data.order);
       setPhase2Data(phase2Res.data);
 
-      if (phase2Res.data?.initial_compatibility !== null) {
+      // Find the relationship
+      const rel = relRes.data.find((r: Relationship) => r.id === relationshipId);
+      setRelationship(rel || null);
+
+      // Check if Phase 2 is completed (has compatibility score)
+      if (phase2Res.data && phase2Res.data.initial_compatibility !== null && phase2Res.data.initial_compatibility !== undefined) {
         setShowResults(true);
-      } else {
-        // Find next area to complete
-        const completedAreas = phase2Res.data?.completed_areas || [];
+        setShowIntro(false);
+      } else if (phase2Res.data && phase2Res.data.completed_areas && phase2Res.data.completed_areas.length > 0) {
+        // Phase 2 in progress - continue from where left off
+        setShowIntro(false);
+        const completedAreas = phase2Res.data.completed_areas || [];
         const nextArea = areasRes.data.order.find((a: string) => !completedAreas.includes(a));
         if (nextArea) {
           setCurrentAreaId(nextArea);
         }
+      } else {
+        // Phase 2 not started - show intro
+        setShowIntro(true);
       }
     } catch (error) {
       console.error('Error fetching phase2 data:', error);
@@ -87,6 +226,14 @@ export default function Phase2() {
       fetchData();
     }, [relationshipId])
   );
+
+  const handleStartPhase2 = () => {
+    setShowIntro(false);
+    // Start with first area
+    if (areaOrder.length > 0) {
+      setCurrentAreaId(areaOrder[0]);
+    }
+  };
 
   const handleAnswer = (value: number) => {
     if (!currentAreaId || !areas[currentAreaId]) return;
@@ -136,7 +283,7 @@ export default function Phase2() {
 
       setPhase2Data(result.data);
 
-      if (result.data.initial_compatibility !== null) {
+      if (result.data.initial_compatibility !== null && result.data.initial_compatibility !== undefined) {
         // All areas completed
         setShowResults(true);
       } else {
@@ -162,6 +309,16 @@ export default function Phase2() {
           <ActivityIndicator size="large" color={Colors.primary} />
         </View>
       </SafeAreaView>
+    );
+  }
+
+  // Show introduction
+  if (showIntro) {
+    return (
+      <Phase2Introduction 
+        relationship={relationship} 
+        onStart={handleStartPhase2}
+      />
     );
   }
 
@@ -250,22 +407,16 @@ export default function Phase2() {
     );
   }
 
-  // Show area selection or question
+  // Show questionnaire
   if (!currentAreaId || !areas[currentAreaId]) {
+    // Fallback - start with first area
+    if (areaOrder.length > 0 && !currentAreaId) {
+      setCurrentAreaId(areaOrder[0]);
+    }
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Ionicons name="arrow-back" size={24} color={Colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Fase 2 - Analisi Relazione</Text>
-          <View style={{ width: 44 }} />
-        </View>
         <View style={styles.loadingContainer}>
-          <Text style={styles.emptyText}>Seleziona un'area per iniziare</Text>
+          <ActivityIndicator size="large" color={Colors.primary} />
         </View>
       </SafeAreaView>
     );
@@ -332,7 +483,14 @@ export default function Phase2() {
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.questionCard}>
-          <Text style={styles.categoryLabel}>{currentArea.name.toUpperCase()}</Text>
+          <View style={styles.areaLabelRow}>
+            <Ionicons 
+              name={(AREA_ICONS[currentAreaId] || 'help-circle-outline') as any} 
+              size={18} 
+              color={Colors.primary} 
+            />
+            <Text style={styles.categoryLabel}>{currentArea.name.toUpperCase()}</Text>
+          </View>
           <Text style={styles.questionText}>{currentQuestion?.text}</Text>
         </View>
 
@@ -419,6 +577,136 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  // Introduction styles
+  introContent: {
+    padding: 24,
+    paddingBottom: 100,
+  },
+  introHeader: {
+    alignItems: 'center',
+    marginBottom: 28,
+  },
+  introIconContainer: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: Colors.primary + '15',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  introTitle: {
+    ...Typography.h1,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  relationshipBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary + '15',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 8,
+    marginBottom: 16,
+  },
+  relationshipBadgeText: {
+    ...Typography.body,
+    fontWeight: '600',
+    color: Colors.primary,
+  },
+  introSubtitle: {
+    ...Typography.body,
+    color: Colors.textLight,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  areasPreview: {
+    marginBottom: 20,
+  },
+  areasTitle: {
+    ...Typography.h3,
+    marginBottom: 16,
+  },
+  areaPreviewCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+  },
+  areaPreviewIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.primary + '15',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  areaPreviewContent: {
+    flex: 1,
+  },
+  areaPreviewTitle: {
+    ...Typography.body,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  areaPreviewDesc: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+  },
+  noteCard: {
+    flexDirection: 'row',
+    backgroundColor: Colors.primary + '10',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    gap: 12,
+  },
+  noteText: {
+    ...Typography.bodySmall,
+    color: Colors.text,
+    flex: 1,
+    lineHeight: 20,
+  },
+  timeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+  },
+  timeText: {
+    ...Typography.bodySmall,
+    color: Colors.textMuted,
+  },
+  introFooter: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 20,
+    paddingBottom: 32,
+    backgroundColor: Colors.background,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  startButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    paddingVertical: 16,
+    borderRadius: 12,
+    gap: 10,
+  },
+  startButtonText: {
+    ...Typography.button,
+    color: '#FFFFFF',
+  },
+  // Header and progress
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -492,12 +780,17 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 4,
   },
+  areaLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
   categoryLabel: {
     ...Typography.caption,
     color: Colors.primary,
     fontWeight: '600',
     letterSpacing: 1,
-    marginBottom: 12,
   },
   questionText: {
     ...Typography.h3,
@@ -585,10 +878,6 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 100,
-  },
-  emptyText: {
-    ...Typography.body,
-    color: Colors.textMuted,
   },
   // Results styles
   resultsContent: {
