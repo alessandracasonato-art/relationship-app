@@ -8,6 +8,9 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -29,6 +32,7 @@ interface MonitoringEntry {
   date: string;
   responses: Record<string, number>;
   compatibility: number;
+  episode_title: string | null;
   created_at: string;
 }
 
@@ -54,8 +58,10 @@ export default function Monitoring() {
   const [phase2Data, setPhase2Data] = useState<Phase2Data | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showCheckin, setShowCheckin] = useState(false);
+  const [showTitleInput, setShowTitleInput] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [responses, setResponses] = useState<Record<string, number>>({});
+  const [episodeTitle, setEpisodeTitle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchData = async () => {
@@ -83,6 +89,9 @@ export default function Monitoring() {
   );
 
   const handleAnswer = (value: number) => {
+    if (!questions || questions.length === 0 || !questions[currentQuestionIndex]) {
+      return;
+    }
     const questionId = questions[currentQuestionIndex].id;
     setResponses(prev => ({ ...prev, [questionId]: value }));
 
@@ -91,18 +100,27 @@ export default function Monitoring() {
     }
   };
 
-  const handleSubmitCheckin = async () => {
+  const handleQuestionsComplete = () => {
     if (Object.keys(responses).length < questions.length) {
       Alert.alert('Attenzione', 'Rispondi a tutte le domande.');
       return;
     }
+    // Show title input screen
+    setShowTitleInput(true);
+  };
 
+  const handleSubmitCheckin = async () => {
     setIsSubmitting(true);
     try {
-      await api.post(`/monitoring/${relationshipId}`, { responses });
+      await api.post(`/monitoring/${relationshipId}`, { 
+        responses,
+        episode_title: episodeTitle.trim() || null
+      });
       setShowCheckin(false);
+      setShowTitleInput(false);
       setCurrentQuestionIndex(0);
       setResponses({});
+      setEpisodeTitle('');
       fetchData();
     } catch (error: any) {
       Alert.alert('Errore', error.response?.data?.detail || 'Impossibile salvare il check-in');
@@ -147,7 +165,79 @@ export default function Monitoring() {
     );
   }
 
-  // Show check-in form
+  // Show title input screen (after questions)
+  if (showCheckin && showTitleInput) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => setShowTitleInput(false)}
+            >
+              <Ionicons name="arrow-back" size={24} color={Colors.text} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Titolo dell'episodio</Text>
+            <View style={{ width: 44 }} />
+          </View>
+
+          <ScrollView contentContainerStyle={styles.titleInputContent}>
+            <View style={styles.titleInputCard}>
+              <Ionicons name="bookmark-outline" size={48} color={Colors.primary} />
+              <Text style={styles.titleInputTitle}>Dai un titolo a questo momento</Text>
+              <Text style={styles.titleInputSubtitle}>
+                Puoi aggiungere un titolo per ricordare meglio questo check-in nella timeline. È facoltativo.
+              </Text>
+              
+              <TextInput
+                style={styles.titleInput}
+                value={episodeTitle}
+                onChangeText={setEpisodeTitle}
+                placeholder="Es: Discussione sul lavoro, Weekend insieme..."
+                placeholderTextColor={Colors.textMuted}
+                maxLength={100}
+                multiline={false}
+              />
+              
+              <Text style={styles.titleInputHint}>
+                {episodeTitle.length}/100 caratteri
+              </Text>
+            </View>
+          </ScrollView>
+
+          <View style={styles.footer}>
+            <TouchableOpacity
+              style={styles.skipButton}
+              onPress={handleSubmitCheckin}
+              disabled={isSubmitting}
+            >
+              <Text style={styles.skipButtonText}>Salta</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
+              onPress={handleSubmitCheckin}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <>
+                  <Text style={styles.submitButtonText}>Salva check-in</Text>
+                  <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    );
+  }
+
+  // Show check-in form (questions)
   if (showCheckin) {
     const currentQuestion = questions[currentQuestionIndex];
     const currentAnswer = responses[currentQuestion?.id];
@@ -235,18 +325,11 @@ export default function Monitoring() {
 
           {isLastQuestion && currentAnswer ? (
             <TouchableOpacity
-              style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
-              onPress={handleSubmitCheckin}
-              disabled={isSubmitting}
+              style={styles.submitButton}
+              onPress={handleQuestionsComplete}
             >
-              {isSubmitting ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <>
-                  <Text style={styles.submitButtonText}>Salva check-in</Text>
-                  <Ionicons name="checkmark" size={20} color="#FFFFFF" />
-                </>
-              )}
+              <Text style={styles.submitButtonText}>Avanti</Text>
+              <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           ) : (
             <View style={styles.placeholder} />
@@ -328,19 +411,30 @@ export default function Monitoring() {
 
         {history.length > 0 && (
           <View style={styles.historySection}>
-            <Text style={styles.historyTitle}>Storico check-in</Text>
-            {history.slice(0, 5).map((entry, idx) => (
+            <Text style={styles.historyTitle}>Timeline</Text>
+            {history.slice(0, 10).map((entry, idx) => (
               <View key={entry.id} style={styles.historyItem}>
-                <View style={styles.historyDate}>
-                  <Ionicons name="calendar-outline" size={16} color={Colors.textMuted} />
-                  <Text style={styles.historyDateText}>
-                    {format(new Date(entry.created_at), "d MMMM yyyy", { locale: it })}
-                  </Text>
+                <View style={styles.historyLeft}>
+                  <View style={styles.historyDot} />
+                  {idx < history.length - 1 && <View style={styles.historyLine} />}
                 </View>
-                <View style={styles.historyCompatibility}>
-                  <Text style={styles.historyCompatibilityText}>
-                    {Math.round(entry.compatibility)}%
-                  </Text>
+                <View style={styles.historyContent}>
+                  <View style={styles.historyHeader}>
+                    <Text style={styles.historyDateText}>
+                      {format(new Date(entry.created_at), "d MMMM yyyy", { locale: it })}
+                    </Text>
+                    <View style={styles.historyCompatibility}>
+                      <Text style={styles.historyCompatibilityText}>
+                        {Math.round(entry.compatibility)}%
+                      </Text>
+                    </View>
+                  </View>
+                  {entry.episode_title && (
+                    <View style={styles.episodeTitleContainer}>
+                      <Ionicons name="bookmark" size={14} color={Colors.primary} />
+                      <Text style={styles.episodeTitleText}>{entry.episode_title}</Text>
+                    </View>
+                  )}
                 </View>
               </View>
             ))}
@@ -451,28 +545,47 @@ const styles = StyleSheet.create({
   historyTitle: {
     ...Typography.h3,
     fontSize: 16,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   historyItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    minHeight: 70,
   },
-  historyDate: {
+  historyLeft: {
+    width: 24,
+    alignItems: 'center',
+  },
+  historyDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: Colors.primary,
+    marginTop: 4,
+  },
+  historyLine: {
+    width: 2,
+    flex: 1,
+    backgroundColor: Colors.border,
+    marginTop: 4,
+  },
+  historyContent: {
+    flex: 1,
+    paddingLeft: 12,
+    paddingBottom: 20,
+  },
+  historyHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'space-between',
   },
   historyDateText: {
     ...Typography.bodySmall,
     color: Colors.textLight,
+    fontWeight: '500',
   },
   historyCompatibility: {
     backgroundColor: Colors.primary + '15',
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
   },
@@ -480,6 +593,17 @@ const styles = StyleSheet.create({
     ...Typography.bodySmall,
     fontWeight: '600',
     color: Colors.primary,
+  },
+  episodeTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    gap: 6,
+  },
+  episodeTitleText: {
+    ...Typography.body,
+    color: Colors.text,
+    fontWeight: '500',
   },
   emptyState: {
     alignItems: 'center',
@@ -619,5 +743,55 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 100,
+  },
+  // Title input styles
+  titleInputContent: {
+    flexGrow: 1,
+    padding: 20,
+    justifyContent: 'center',
+  },
+  titleInputCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 24,
+    padding: 32,
+    alignItems: 'center',
+  },
+  titleInputTitle: {
+    ...Typography.h2,
+    textAlign: 'center',
+    marginTop: 20,
+    marginBottom: 12,
+  },
+  titleInputSubtitle: {
+    ...Typography.body,
+    color: Colors.textLight,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  titleInput: {
+    width: '100%',
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: Colors.text,
+    textAlign: 'center',
+  },
+  titleInputHint: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    marginTop: 8,
+  },
+  skipButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+  skipButtonText: {
+    ...Typography.body,
+    color: Colors.textLight,
   },
 });

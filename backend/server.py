@@ -107,6 +107,7 @@ class Phase2Response(BaseModel):
 
 class MonitoringSubmit(BaseModel):
     responses: Dict[str, int]
+    episode_title: Optional[str] = None  # Titolo opzionale dell'episodio
 
 class MonitoringResponse(BaseModel):
     id: str
@@ -114,6 +115,7 @@ class MonitoringResponse(BaseModel):
     date: datetime
     responses: Dict[str, int]
     compatibility: float
+    episode_title: Optional[str] = None
     created_at: datetime
 
 class ContentResponse(BaseModel):
@@ -639,6 +641,7 @@ async def submit_monitoring(relationship_id: str, data: MonitoringSubmit, curren
         "date": datetime.utcnow(),
         "responses": data.responses,
         "compatibility": new_compatibility,
+        "episode_title": data.episode_title,  # Titolo opzionale dell'episodio
         "created_at": datetime.utcnow()
     }
     
