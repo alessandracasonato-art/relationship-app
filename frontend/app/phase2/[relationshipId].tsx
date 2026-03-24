@@ -15,9 +15,14 @@ import { Colors } from '../../src/constants/colors';
 import { Typography } from '../../src/constants/typography';
 import api from '../../src/services/api';
 
+interface QuestionOption {
+  value: number;
+  label: string;
+}
+
 interface Area {
   name: string;
-  questions: Array<{ id: string; text: string }>;
+  questions: Array<{ id: string; text: string; options?: QuestionOption[] }>;
 }
 
 interface Phase2Data {
@@ -39,11 +44,10 @@ interface Relationship {
 }
 
 const ANSWER_OPTIONS = [
-  { value: 1, label: 'Per niente' },
-  { value: 2, label: 'Raramente' },
-  { value: 3, label: 'A volte' },
-  { value: 4, label: 'Spesso' },
-  { value: 5, label: 'Sempre' },
+  { value: 4, label: 'Opzione 1' },
+  { value: 3, label: 'Opzione 2' },
+  { value: 2, label: 'Opzione 3' },
+  { value: 1, label: 'Opzione 4' },
 ];
 
 const AREA_ICONS: Record<string, string> = {
@@ -51,7 +55,7 @@ const AREA_ICONS: Record<string, string> = {
   valori: 'heart-outline',
   bisogni_emotivi: 'hand-left-outline',
   conflitto: 'flash-outline',
-  visione: 'telescope-outline',
+  stabilita: 'shield-checkmark-outline',
 };
 
 const AREA_DESCRIPTIONS: Record<string, string> = {
@@ -59,7 +63,7 @@ const AREA_DESCRIPTIONS: Record<string, string> = {
   valori: 'I principi e le priorità che condividete',
   bisogni_emotivi: 'Il supporto emotivo nella relazione',
   conflitto: 'Come affrontate i disaccordi',
-  visione: 'Le aspettative sul futuro insieme',
+  stabilita: 'La coerenza e sicurezza nella relazione',
 };
 
 // Introduction component for Phase 2
@@ -134,11 +138,11 @@ function Phase2Introduction({
 
           <View style={styles.areaPreviewCard}>
             <View style={styles.areaPreviewIcon}>
-              <Ionicons name="telescope-outline" size={24} color={Colors.primary} />
+              <Ionicons name="shield-checkmark-outline" size={24} color={Colors.primary} />
             </View>
             <View style={styles.areaPreviewContent}>
-              <Text style={styles.areaPreviewTitle}>5. Visione della Relazione</Text>
-              <Text style={styles.areaPreviewDesc}>Le aspettative sul futuro</Text>
+              <Text style={styles.areaPreviewTitle}>5. Stabilità e Coerenza</Text>
+              <Text style={styles.areaPreviewDesc}>La sicurezza nella relazione</Text>
             </View>
           </View>
         </View>
@@ -152,7 +156,7 @@ function Phase2Introduction({
 
         <View style={styles.timeCard}>
           <Ionicons name="time-outline" size={20} color={Colors.textMuted} />
-          <Text style={styles.timeText}>Tempo stimato: ~15 minuti (25 domande totali)</Text>
+          <Text style={styles.timeText}>Tempo stimato: ~10 minuti (15 domande totali)</Text>
         </View>
       </ScrollView>
 
@@ -495,7 +499,7 @@ export default function Phase2() {
         </View>
 
         <View style={styles.optionsContainer}>
-          {ANSWER_OPTIONS.map(option => (
+          {(currentQuestion?.options || ANSWER_OPTIONS).map(option => (
             <TouchableOpacity
               key={option.value}
               style={[

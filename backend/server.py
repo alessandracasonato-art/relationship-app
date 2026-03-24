@@ -165,83 +165,318 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise HTTPException(status_code=401, detail="Token non valido")
 
 # ==================== PHASE 1 QUESTIONS ====================
+# Nuove domande con risposte a scelta multipla (4 opzioni)
+# Punteggio: opzione 1 = 4, opzione 2 = 3, opzione 3 = 2, opzione 4 = 1
 
 PHASE1_QUESTIONS = [
-    {"id": "comm_1", "category": "comunicazione", "text": "Preferisco esprimere i miei sentimenti in modo diretto piuttosto che attraverso gesti o azioni."},
-    {"id": "comm_2", "category": "comunicazione", "text": "Mi sento a mio agio nel parlare di argomenti difficili o delicati."},
-    {"id": "comm_3", "category": "comunicazione", "text": "Ascolto attentamente prima di rispondere durante una conversazione importante."},
-    {"id": "emo_1", "category": "bisogni_emotivi", "text": "Ho bisogno di ricevere rassicurazioni frequenti nelle mie relazioni."},
-    {"id": "emo_2", "category": "bisogni_emotivi", "text": "Mi sento più connesso quando condivido attività quotidiane con gli altri."},
-    {"id": "emo_3", "category": "bisogni_emotivi", "text": "L'affetto fisico è importante per sentirmi amato/a."},
-    {"id": "emo_4", "category": "bisogni_emotivi", "text": "Ho bisogno di spazio personale per ricaricarmi emotivamente."},
-    {"id": "exp_1", "category": "aspettative", "text": "Mi aspetto che le persone importanti nella mia vita mi supportino nelle decisioni."},
-    {"id": "exp_2", "category": "aspettative", "text": "Credo che le relazioni richiedano un impegno costante per funzionare."},
-    {"id": "exp_3", "category": "aspettative", "text": "Mi aspetto reciprocità nelle mie relazioni."},
-    {"id": "conf_1", "category": "conflitti", "text": "Affronto i conflitti direttamente piuttosto che evitarli."},
-    {"id": "conf_2", "category": "conflitti", "text": "Durante un disaccordo, cerco di capire il punto di vista dell'altro."},
-    {"id": "conf_3", "category": "conflitti", "text": "Sono disposto/a a scendere a compromessi per risolvere un conflitto."},
-    {"id": "conf_4", "category": "conflitti", "text": "Riesco a gestire le mie emozioni durante una discussione."},
-    {"id": "bound_1", "category": "confini", "text": "So riconoscere e comunicare i miei limiti personali."},
-    {"id": "bound_2", "category": "confini", "text": "Rispetto i confini degli altri anche quando non li condivido."},
-    {"id": "bound_3", "category": "confini", "text": "Mi sento in diritto di dire no senza sentirmi in colpa."},
+    # 1️⃣ Energia relazionale
+    {
+        "id": "energia_1",
+        "category": "energia_relazionale",
+        "text": "Quando vivi un momento emotivamente positivo con qualcuno, dopo ti senti:",
+        "options": [
+            {"value": 4, "label": "Più energico/a"},
+            {"value": 3, "label": "Sereno/a"},
+            {"value": 2, "label": "Stabile"},
+            {"value": 1, "label": "Scarico/a"}
+        ]
+    },
+    {
+        "id": "energia_2",
+        "category": "energia_relazionale",
+        "text": "Quando vivi un momento emotivamente faticoso con qualcuno, quanto tempo tende a influenzarti?",
+        "options": [
+            {"value": 4, "label": "Si riduce in poco tempo (entro poche ore)"},
+            {"value": 3, "label": "Rimane per il resto della giornata"},
+            {"value": 2, "label": "Dura anche nei giorni successivi"},
+            {"value": 1, "label": "Mi porta a chiudermi o a prendere distanza"}
+        ]
+    },
+    # 2️⃣ Gestione emotiva
+    {
+        "id": "gestione_1",
+        "category": "gestione_emotiva",
+        "text": "Quando qualcosa ti ferisce in una relazione, la tua prima reazione è:",
+        "options": [
+            {"value": 4, "label": "Ne parlo subito"},
+            {"value": 3, "label": "Mi prendo tempo"},
+            {"value": 2, "label": "Mi chiudo"},
+            {"value": 1, "label": "Faccio finta di nulla"}
+        ]
+    },
+    {
+        "id": "gestione_2",
+        "category": "gestione_emotiva",
+        "text": "Quando provi un'emozione intensa, tendi a:",
+        "options": [
+            {"value": 4, "label": "Esprimerla chiaramente"},
+            {"value": 3, "label": "Filtrarla"},
+            {"value": 2, "label": "Trattenerla"},
+            {"value": 1, "label": "Non comprenderla subito"}
+        ]
+    },
+    # 3️⃣ Bisogni relazionali
+    {
+        "id": "bisogni_1",
+        "category": "bisogni_relazionali",
+        "text": "In una relazione per te è più importante:",
+        "options": [
+            {"value": 4, "label": "Sentirti compreso/a"},
+            {"value": 3, "label": "Sentirti libero/a"},
+            {"value": 2, "label": "Sentirti supportato/a"},
+            {"value": 1, "label": "Sentirti stabile"}
+        ]
+    },
+    {
+        "id": "bisogni_2",
+        "category": "bisogni_relazionali",
+        "text": "Quando una relazione non risponde ai tuoi bisogni, tendi a:",
+        "options": [
+            {"value": 4, "label": "Comunicarlo"},
+            {"value": 3, "label": "Adattarti"},
+            {"value": 2, "label": "Allontanarti"},
+            {"value": 1, "label": "Confonderti"}
+        ]
+    },
+    # 4️⃣ Stile decisionale
+    {
+        "id": "decisionale_1",
+        "category": "stile_decisionale",
+        "text": "Nelle relazioni prendi decisioni principalmente:",
+        "options": [
+            {"value": 4, "label": "Dopo aver riflettuto"},
+            {"value": 3, "label": "Di impulso"},
+            {"value": 2, "label": "In base all'altro"},
+            {"value": 1, "label": "Evitandole"}
+        ]
+    },
+    {
+        "id": "decisionale_2",
+        "category": "stile_decisionale",
+        "text": "Quando c'è qualcosa da chiarire, tendi a:",
+        "options": [
+            {"value": 4, "label": "Affrontarlo subito"},
+            {"value": 3, "label": "Rimandare"},
+            {"value": 2, "label": "Aspettare che lo faccia l'altro"},
+            {"value": 1, "label": "Evitarlo"}
+        ]
+    },
+    # 5️⃣ Reazione al cambiamento
+    {
+        "id": "cambiamento_1",
+        "category": "reazione_cambiamento",
+        "text": "Quando una relazione cambia rispetto a prima (indipendentemente dal fatto che sia positivo o faticoso), io:",
+        "options": [
+            {"value": 4, "label": "Osservo"},
+            {"value": 3, "label": "Mi attivo"},
+            {"value": 2, "label": "Cerco di riorganizzare"},
+            {"value": 1, "label": "Mi irrigidisco"}
+        ]
+    },
+    {
+        "id": "cambiamento_2",
+        "category": "reazione_cambiamento",
+        "text": "Quando percepisci distanza in una relazione, tendi a:",
+        "options": [
+            {"value": 4, "label": "Avvicinarti"},
+            {"value": 3, "label": "Aspettare"},
+            {"value": 2, "label": "Allontanarti"},
+            {"value": 1, "label": "Non sapere cosa fare"}
+        ]
+    },
 ]
 
+# Nomi delle categorie per la visualizzazione
+PHASE1_CATEGORY_NAMES = {
+    "energia_relazionale": "Energia Relazionale",
+    "gestione_emotiva": "Gestione Emotiva",
+    "bisogni_relazionali": "Bisogni Relazionali",
+    "stile_decisionale": "Stile Decisionale",
+    "reazione_cambiamento": "Reazione al Cambiamento",
+}
+
 # ==================== PHASE 2 QUESTIONS BY AREA ====================
+# Nuove domande con risposte a scelta multipla (4 opzioni)
 
 PHASE2_AREAS = {
     "comunicazione": {
         "name": "Comunicazione",
         "questions": [
-            {"id": "p2_comm_1", "text": "Ti senti ascoltato/a quando parli con questa persona?"},
-            {"id": "p2_comm_2", "text": "Riesci ad esprimere liberamente i tuoi pensieri e sentimenti?"},
-            {"id": "p2_comm_3", "text": "La comunicazione tra voi è chiara e comprensibile?"},
-            {"id": "p2_comm_4", "text": "Vi confrontate regolarmente su questioni importanti?"},
-            {"id": "p2_comm_5", "text": "Ti senti rispettato/a durante le conversazioni difficili?"},
+            {
+                "id": "p2_comm_1",
+                "text": "Con questa persona la comunicazione è:",
+                "options": [
+                    {"value": 4, "label": "Fluida"},
+                    {"value": 3, "label": "Alterna"},
+                    {"value": 2, "label": "Difficile"},
+                    {"value": 1, "label": "Evitata"}
+                ]
+            },
+            {
+                "id": "p2_comm_2",
+                "text": "Quando parlate di cose importanti:",
+                "options": [
+                    {"value": 4, "label": "Vi capite"},
+                    {"value": 3, "label": "A volte sì, a volte no"},
+                    {"value": 2, "label": "Spesso no"},
+                    {"value": 1, "label": "Evitate"}
+                ]
+            },
+            {
+                "id": "p2_comm_3",
+                "text": "Ti senti libero/a di dire ciò che pensi?",
+                "options": [
+                    {"value": 4, "label": "Sempre"},
+                    {"value": 3, "label": "Spesso"},
+                    {"value": 2, "label": "Poco"},
+                    {"value": 1, "label": "No"}
+                ]
+            }
         ]
     },
     "valori": {
         "name": "Valori",
         "questions": [
-            {"id": "p2_val_1", "text": "Condividete valori fondamentali simili?"},
-            {"id": "p2_val_2", "text": "Rispettate le differenze nei vostri valori?"},
-            {"id": "p2_val_3", "text": "Le vostre priorità di vita sono allineate?"},
-            {"id": "p2_val_4", "text": "Condividete una visione simile dell'importanza della famiglia?"},
-            {"id": "p2_val_5", "text": "I vostri valori etici sono compatibili?"},
+            {
+                "id": "p2_val_1",
+                "text": "Senti che avete una visione simile su ciò che è importante nella vita?",
+                "options": [
+                    {"value": 4, "label": "Molto"},
+                    {"value": 3, "label": "Abbastanza"},
+                    {"value": 2, "label": "Poco"},
+                    {"value": 1, "label": "Per niente"}
+                ]
+            },
+            {
+                "id": "p2_val_2",
+                "text": "Le vostre priorità sono:",
+                "options": [
+                    {"value": 4, "label": "Allineate"},
+                    {"value": 3, "label": "Parzialmente diverse"},
+                    {"value": 2, "label": "Molto diverse"},
+                    {"value": 1, "label": "Non chiare"}
+                ]
+            },
+            {
+                "id": "p2_val_3",
+                "text": "Ti capita di sentirti \"fuori posto\" rispetto al modo di vedere le cose dell'altro?",
+                "options": [
+                    {"value": 4, "label": "Mai"},
+                    {"value": 3, "label": "A volte"},
+                    {"value": 2, "label": "Spesso"},
+                    {"value": 1, "label": "Quasi sempre"}
+                ]
+            }
         ]
     },
     "bisogni_emotivi": {
         "name": "Bisogni Emotivi",
         "questions": [
-            {"id": "p2_emo_1", "text": "Ti senti emotivamente supportato/a in questa relazione?"},
-            {"id": "p2_emo_2", "text": "I tuoi bisogni emotivi vengono riconosciuti?"},
-            {"id": "p2_emo_3", "text": "Riesci ad essere vulnerabile con questa persona?"},
-            {"id": "p2_emo_4", "text": "Ti senti sicuro/a nel condividere le tue paure e insicurezze?"},
-            {"id": "p2_emo_5", "text": "La relazione ti fa sentire valorizzato/a?"},
+            {
+                "id": "p2_emo_1",
+                "text": "Ti senti visto/a da questa persona?",
+                "options": [
+                    {"value": 4, "label": "Molto"},
+                    {"value": 3, "label": "Abbastanza"},
+                    {"value": 2, "label": "Poco"},
+                    {"value": 1, "label": "Per niente"}
+                ]
+            },
+            {
+                "id": "p2_emo_2",
+                "text": "Questa relazione ti fa sentire:",
+                "options": [
+                    {"value": 4, "label": "Nutrito/a"},
+                    {"value": 3, "label": "Alterno/a"},
+                    {"value": 2, "label": "Vuoto/a"},
+                    {"value": 1, "label": "Confuso/a"}
+                ]
+            },
+            {
+                "id": "p2_emo_3",
+                "text": "Quando hai bisogno di supporto, questa persona:",
+                "options": [
+                    {"value": 4, "label": "C'è"},
+                    {"value": 3, "label": "A volte"},
+                    {"value": 2, "label": "Raramente"},
+                    {"value": 1, "label": "No"}
+                ]
+            }
         ]
     },
     "conflitto": {
         "name": "Gestione del Conflitto",
         "questions": [
-            {"id": "p2_conf_1", "text": "I conflitti vengono affrontati in modo costruttivo?"},
-            {"id": "p2_conf_2", "text": "Riuscite a trovare compromessi durante i disaccordi?"},
-            {"id": "p2_conf_3", "text": "Dopo un conflitto, riuscite a riconciliarvi?"},
-            {"id": "p2_conf_4", "text": "Vi ascoltate reciprocamente durante le discussioni?"},
-            {"id": "p2_conf_5", "text": "I conflitti vengono risolti senza rancore?"},
+            {
+                "id": "p2_conf_1",
+                "text": "Quando c'è tensione tra voi:",
+                "options": [
+                    {"value": 4, "label": "Viene affrontata"},
+                    {"value": 3, "label": "A volte sì"},
+                    {"value": 2, "label": "Viene evitata"},
+                    {"value": 1, "label": "Esplode"}
+                ]
+            },
+            {
+                "id": "p2_conf_2",
+                "text": "Dopo un conflitto:",
+                "options": [
+                    {"value": 4, "label": "Vi riavvicinate"},
+                    {"value": 3, "label": "Serve tempo"},
+                    {"value": 2, "label": "Restano strascichi"},
+                    {"value": 1, "label": "Si crea distanza"}
+                ]
+            },
+            {
+                "id": "p2_conf_3",
+                "text": "Durante un confronto ti senti:",
+                "options": [
+                    {"value": 4, "label": "Ascoltato/a"},
+                    {"value": 3, "label": "Parzialmente"},
+                    {"value": 2, "label": "Poco"},
+                    {"value": 1, "label": "Non ascoltato/a"}
+                ]
+            }
         ]
     },
-    "visione": {
-        "name": "Visione della Relazione",
+    "stabilita": {
+        "name": "Stabilità e Coerenza",
         "questions": [
-            {"id": "p2_vis_1", "text": "Avete aspettative simili sul futuro della relazione?"},
-            {"id": "p2_vis_2", "text": "Vi vedete insieme nel lungo termine?"},
-            {"id": "p2_vis_3", "text": "Condividete obiettivi comuni per la relazione?"},
-            {"id": "p2_vis_4", "text": "La relazione sta crescendo nella direzione desiderata?"},
-            {"id": "p2_vis_5", "text": "Vi impegnate entrambi per il benessere della relazione?"},
+            {
+                "id": "p2_stab_1",
+                "text": "Questa relazione è:",
+                "options": [
+                    {"value": 4, "label": "Stabile"},
+                    {"value": 3, "label": "Variabile"},
+                    {"value": 2, "label": "Instabile"},
+                    {"value": 1, "label": "Imprevedibile"}
+                ]
+            },
+            {
+                "id": "p2_stab_2",
+                "text": "Il comportamento dell'altra persona è:",
+                "options": [
+                    {"value": 4, "label": "Coerente"},
+                    {"value": 3, "label": "A tratti incoerente"},
+                    {"value": 2, "label": "Spesso incoerente"},
+                    {"value": 1, "label": "Difficile da leggere"}
+                ]
+            },
+            {
+                "id": "p2_stab_3",
+                "text": "Ti senti al sicuro in questa relazione?",
+                "options": [
+                    {"value": 4, "label": "Sì"},
+                    {"value": 3, "label": "Abbastanza"},
+                    {"value": 2, "label": "Poco"},
+                    {"value": 1, "label": "No"}
+                ]
+            }
         ]
     }
 }
 
-PHASE2_AREA_ORDER = ["comunicazione", "valori", "bisogni_emotivi", "conflitto", "visione"]
+PHASE2_AREA_ORDER = ["comunicazione", "valori", "bisogni_emotivi", "conflitto", "stabilita"]
 
 # ==================== MONITORING QUESTIONS ====================
 
@@ -355,37 +590,56 @@ async def submit_phase1(data: Phase1Submit, current_user: dict = Depends(get_cur
     profile_score = {}
     for cat, scores in categories.items():
         if scores:
-            profile_score[cat] = sum(scores) / len(scores)
+            # Converti in percentuale (max 4 punti = 100%)
+            profile_score[cat] = (sum(scores) / len(scores) / 4) * 100
     
-    # Generate traits based on scores
+    # Generate traits based on new categories
     traits = []
-    if profile_score.get("comunicazione", 0) >= 4:
-        traits.append("Comunicatore diretto e aperto")
-    elif profile_score.get("comunicazione", 0) >= 3:
-        traits.append("Comunicatore equilibrato")
-    else:
-        traits.append("Comunicatore riflessivo")
     
-    if profile_score.get("bisogni_emotivi", 0) >= 4:
-        traits.append("Alta necessità di connessione emotiva")
-    elif profile_score.get("bisogni_emotivi", 0) >= 3:
-        traits.append("Bisogni emotivi bilanciati")
+    # Energia relazionale
+    energia = profile_score.get("energia_relazionale", 0)
+    if energia >= 75:
+        traits.append("Alta capacità di recupero emotivo")
+    elif energia >= 50:
+        traits.append("Energia relazionale equilibrata")
     else:
-        traits.append("Indipendente emotivamente")
+        traits.append("Sensibile agli eventi relazionali")
     
-    if profile_score.get("conflitti", 0) >= 4:
-        traits.append("Affronta i conflitti con sicurezza")
-    elif profile_score.get("conflitti", 0) >= 3:
-        traits.append("Gestione equilibrata dei conflitti")
+    # Gestione emotiva
+    gestione = profile_score.get("gestione_emotiva", 0)
+    if gestione >= 75:
+        traits.append("Comunica le emozioni apertamente")
+    elif gestione >= 50:
+        traits.append("Gestione emotiva riflessiva")
     else:
-        traits.append("Preferisce evitare i conflitti")
+        traits.append("Elaborazione emotiva interna")
     
-    if profile_score.get("confini", 0) >= 4:
-        traits.append("Confini personali chiari e definiti")
-    elif profile_score.get("confini", 0) >= 3:
-        traits.append("Confini personali flessibili")
+    # Bisogni relazionali
+    bisogni = profile_score.get("bisogni_relazionali", 0)
+    if bisogni >= 75:
+        traits.append("Esprime chiaramente i propri bisogni")
+    elif bisogni >= 50:
+        traits.append("Bisogni relazionali adattivi")
     else:
-        traits.append("Confini personali in sviluppo")
+        traits.append("Tende ad adattarsi agli altri")
+    
+    # Stile decisionale
+    decisionale = profile_score.get("stile_decisionale", 0)
+    if decisionale >= 75:
+        traits.append("Decisioni relazionali proattive")
+    elif decisionale >= 50:
+        traits.append("Stile decisionale ponderato")
+    else:
+        traits.append("Preferisce evitare le decisioni difficili")
+    
+    # Reazione al cambiamento
+    cambiamento = profile_score.get("reazione_cambiamento", 0)
+    if cambiamento >= 75:
+        traits.append("Si attiva positivamente al cambiamento")
+    elif cambiamento >= 50:
+        traits.append("Osserva il cambiamento con cautela")
+    else:
+        traits.append("Il cambiamento genera incertezza")
     
     response_id = str(uuid.uuid4())
     response_doc = {
@@ -537,10 +791,10 @@ async def submit_phase2_area(relationship_id: str, data: Phase2AreaSubmit, curre
     if data.area_id not in completed_areas:
         completed_areas.append(data.area_id)
     
-    # Calculate area score
+    # Calculate area score (ora 1-4 invece di 1-5)
     scores = list(data.responses.values())
     if scores:
-        area_scores[data.area_id] = (sum(scores) / len(scores)) * 20  # Convert 1-5 to 0-100
+        area_scores[data.area_id] = (sum(scores) / len(scores) / 4) * 100  # Convert 1-4 to 0-100
     
     # Calculate compatibility if all areas completed
     initial_compatibility = None

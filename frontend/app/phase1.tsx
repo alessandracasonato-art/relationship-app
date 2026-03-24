@@ -16,19 +16,25 @@ import { Typography } from '../src/constants/typography';
 import api from '../src/services/api';
 import { useAuthStore } from '../src/store/authStore';
 
+interface QuestionOption {
+  value: number;
+  label: string;
+}
+
 interface Question {
   id: string;
   category: string;
   text: string;
+  options?: QuestionOption[];
 }
 
-const ANSWER_OPTIONS = [
-  { value: 1, label: 'Per niente' },
-  { value: 2, label: 'Poco' },
-  { value: 3, label: 'Abbastanza' },
-  { value: 4, label: 'Molto' },
-  { value: 5, label: 'Completamente' },
-];
+const CATEGORY_NAMES: Record<string, string> = {
+  energia_relazionale: "Energia Relazionale",
+  gestione_emotiva: "Gestione Emotiva",
+  bisogni_relazionali: "Bisogni Relazionali",
+  stile_decisionale: "Stile Decisionale",
+  reazione_cambiamento: "Reazione al Cambiamento",
+};
 
 // Introduction component
 function Introduction({ onStart }: { onStart: () => void }) {
@@ -53,13 +59,13 @@ function Introduction({ onStart }: { onStart: () => void }) {
               <Text style={styles.phaseNumberText}>1</Text>
             </View>
             <View style={styles.phaseContent}>
-              <Text style={styles.phaseTitle}>Profilo Relazionale Personale</Text>
+              <Text style={styles.phaseTitle}>Conoscenza di Sé</Text>
               <Text style={styles.phaseDescription}>
-                Scopri il tuo stile relazionale attraverso domande su comunicazione, bisogni emotivi, aspettative, gestione dei conflitti e confini personali.
+                Scopri il tuo stile relazionale attraverso domande su energia, gestione emotiva, bisogni, decisioni e reazione al cambiamento.
               </Text>
               <View style={styles.phaseInfo}>
                 <Ionicons name="time-outline" size={14} color={Colors.textMuted} />
-                <Text style={styles.phaseInfoText}>~10 minuti • 17 domande</Text>
+                <Text style={styles.phaseInfoText}>~5 minuti • 10 domande</Text>
               </View>
             </View>
           </View>
@@ -75,7 +81,7 @@ function Introduction({ onStart }: { onStart: () => void }) {
               </Text>
               <View style={styles.phaseInfo}>
                 <Ionicons name="time-outline" size={14} color={Colors.textMuted} />
-                <Text style={styles.phaseInfoText}>~15 minuti • 25 domande</Text>
+                <Text style={styles.phaseInfoText}>~10 minuti • 15 domande</Text>
               </View>
             </View>
           </View>
@@ -106,9 +112,9 @@ function Introduction({ onStart }: { onStart: () => void }) {
 
         <View style={styles.currentPhaseCard}>
           <Text style={styles.currentPhaseLabel}>Inizierai con</Text>
-          <Text style={styles.currentPhaseTitle}>Fase 1: Profilo Relazionale</Text>
+          <Text style={styles.currentPhaseTitle}>Fase 1: Conoscenza di Sé</Text>
           <Text style={styles.currentPhaseDescription}>
-            Ti verranno poste 17 domande per comprendere il tuo stile relazionale. Prenditi il tempo necessario per riflettere su ogni domanda.
+            Ti verranno poste 10 domande per comprendere il tuo stile relazionale. Prenditi il tempo necessario per riflettere su ogni domanda.
           </Text>
         </View>
       </ScrollView>
@@ -203,6 +209,16 @@ export default function Phase1() {
   const progress = ((currentIndex + 1) / questions.length) * 100;
   const isLastQuestion = currentIndex === questions.length - 1;
   const currentAnswer = responses[currentQuestion?.id];
+  
+  // Get options from question or use defaults
+  const options = currentQuestion?.options || [
+    { value: 4, label: 'Opzione 1' },
+    { value: 3, label: 'Opzione 2' },
+    { value: 2, label: 'Opzione 3' },
+    { value: 1, label: 'Opzione 4' },
+  ];
+
+  const categoryName = CATEGORY_NAMES[currentQuestion?.category] || currentQuestion?.category?.replace('_', ' ');
 
   return (
     <SafeAreaView style={styles.container}>
@@ -222,7 +238,7 @@ export default function Phase1() {
         >
           <Ionicons name="close" size={24} color={Colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Fase 1 - Profilo Relazionale</Text>
+        <Text style={styles.headerTitle}>Fase 1 - Conoscenza di Sé</Text>
         <View style={{ width: 44 }} />
       </View>
 
@@ -238,13 +254,13 @@ export default function Phase1() {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.questionCard}>
           <Text style={styles.categoryLabel}>
-            {currentQuestion?.category.replace('_', ' ').toUpperCase()}
+            {categoryName?.toUpperCase()}
           </Text>
           <Text style={styles.questionText}>{currentQuestion?.text}</Text>
         </View>
 
         <View style={styles.optionsContainer}>
-          {ANSWER_OPTIONS.map(option => (
+          {options.map((option, index) => (
             <TouchableOpacity
               key={option.value}
               style={[
@@ -577,6 +593,7 @@ const styles = StyleSheet.create({
   },
   optionText: {
     ...Typography.body,
+    flex: 1,
   },
   optionTextSelected: {
     fontWeight: '600',
