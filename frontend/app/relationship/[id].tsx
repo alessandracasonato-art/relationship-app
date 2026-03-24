@@ -8,6 +8,10 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -47,6 +51,14 @@ interface MonitoringEntry {
 
 const screenWidth = Dimensions.get('window').width;
 
+const RELATIONSHIP_TYPES = [
+  'Partner',
+  'Familiare',
+  'Amico/a',
+  'Collega',
+  'Altro',
+];
+
 export default function RelationshipDetail() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -54,6 +66,12 @@ export default function RelationshipDetail() {
   const [phase2Data, setPhase2Data] = useState<Phase2Data | null>(null);
   const [monitoringHistory, setMonitoringHistory] = useState<MonitoringEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Edit modal state
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editType, setEditType] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -67,6 +85,11 @@ export default function RelationshipDetail() {
       setRelationship(rel || null);
       setPhase2Data(phase2Res.data);
       setMonitoringHistory(monitoringRes.data || []);
+      
+      if (rel) {
+        setEditName(rel.person_name);
+        setEditType(rel.relationship_type || '');
+      }
     } catch (error) {
       console.error('Error fetching relationship data:', error);
     } finally {
@@ -79,6 +102,27 @@ export default function RelationshipDetail() {
       fetchData();
     }, [id])
   );
+
+  const handleSaveEdit = async () => {
+    if (!editName.trim()) {
+      Alert.alert('Errore', 'Il nome è obbligatorio');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await api.put(`/relationships/${id}`, {
+        person_name: editName.trim(),
+        relationship_type: editType || null,
+      });
+      setEditModalVisible(false);
+      fetchData();
+    } catch (error) {
+      Alert.alert('Errore', 'Impossibile salvare le modifiche');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleDelete = () => {
     Alert.alert(
@@ -95,6 +139,27 @@ export default function RelationshipDetail() {
               router.replace('/(tabs)/relationships');
             } catch (error) {
               Alert.alert('Errore', 'Errore durante l\'eliminazione');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleRedoPhase2 = () => {
+    Alert.alert(
+      'Aggiorna analisi',
+      'Vuoi rifare l\'analisi della relazione? Le risposte precedenti verranno sostituite e l\'indice di compatibilità sarà aggiornato.',
+      [
+        { text: 'Annulla', style: 'cancel' },
+        {
+          text: 'Aggiorna',
+          onPress: async () => {
+            try {
+              await api.delete(`/phase2/${id}/reset`);
+              router.push(`/phase2/${id}`);
+            } catch (error) {
+              Alert.alert('Errore', 'Impossibile resettare l\'analisi');
             }
           },
         },
@@ -160,8 +225,8 @@ export default function RelationshipDetail() {
           <Ionicons name="arrow-back" size={24} color={Colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{relationship.person_name}</Text>
-        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-          <Ionicons name="trash-outline" size={22} color={Colors.error} />
+        <TouchableOpacity style={styles.editButton} onPress={() => setEditModalVisible(true)}>
+          <Ionicons name="pencil-outline" size={22} color={Colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -178,6 +243,15 @@ export default function RelationshipDetail() {
           <Text style={styles.createdAt}>
             Aggiunto il {format(new Date(relationship.created_at), "d MMMM yyyy", { locale: it })}
           </Text>
+          
+          {/* Edit button inline */}
+          <TouchableOpacity 
+            style={styles.editInlineButton}
+            onPress={() => setEditModalVisible(true)}
+          >
+            <Ionicons name="pencil" size={14} color={Colors.primary} />
+            <Text style={styles.editInlineText}>Modifica dati</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Compatibility Score */}
@@ -193,6 +267,16 @@ export default function RelationshipDetail() {
                 <Text style={styles.monitoringBadgeText}>Monitoraggio attivo</Text>
               </View>
             )}
+          </View>
+        )}
+
+        {/* Micro copy for updating */}
+        {phase2Data?.initial_compatibility && (
+          <View style={styles.updateHintCard}>
+            <Ionicons name="refresh-outline" size={20} color={Colors.textLight} />
+            <Text style={styles.updateHintText}>
+              Puoi aggiornare questo profilo se la tua percezione cambia nel tempo
+            </Text>
           </View>
         )}
 
@@ -291,15 +375,103 @@ export default function RelationshipDetail() {
 
               <TouchableOpacity
                 style={styles.secondaryButton}
+                onPress={handleRedoPhase2}
+              >
+                <Ionicons name="refresh-outline" size={20} color={Colors.primary} />
+                <Text style={styles.secondaryButtonText}>Aggiorna analisi</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.tertiaryButton}
                 onPress={() => router.push(`/phase2/${id}`)}
               >
-                <Ionicons name="eye-outline" size={20} color={Colors.primary} />
-                <Text style={styles.secondaryButtonText}>Vedi risultati analisi</Text>
+                <Ionicons name="eye-outline" size={20} color={Colors.textLight} />
+                <Text style={styles.tertiaryButtonText}>Vedi risultati completi</Text>
               </TouchableOpacity>
             </>
           )}
+
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={handleDelete}
+          >
+            <Ionicons name="trash-outline" size={20} color={Colors.error} />
+            <Text style={styles.deleteButtonText}>Elimina relazione</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Edit Modal */}
+      <Modal
+        visible={editModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Modifica relazione</Text>
+              <TouchableOpacity onPress={() => setEditModalVisible(false)}>
+                <Ionicons name="close" size={24} color={Colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Nome della persona</Text>
+              <TextInput
+                style={styles.input}
+                value={editName}
+                onChangeText={setEditName}
+                placeholder="Es. Marco"
+                placeholderTextColor={Colors.textMuted}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Tipo di relazione</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View style={styles.typeButtons}>
+                  {RELATIONSHIP_TYPES.map(type => (
+                    <TouchableOpacity
+                      key={type}
+                      style={[
+                        styles.typeButton,
+                        editType === type && styles.typeButtonActive,
+                      ]}
+                      onPress={() => setEditType(editType === type ? '' : type)}
+                    >
+                      <Text
+                        style={[
+                          styles.typeButtonText,
+                          editType === type && styles.typeButtonTextActive,
+                        ]}
+                      >
+                        {type}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
+              onPress={handleSaveEdit}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.saveButtonText}>Salva modifiche</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -329,8 +501,10 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...Typography.h3,
+    flex: 1,
+    textAlign: 'center',
   },
-  deleteButton: {
+  editButton: {
     width: 44,
     height: 44,
     justifyContent: 'center',
@@ -369,6 +543,21 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textMuted,
   },
+  editInlineButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: Colors.primary + '10',
+    borderRadius: 20,
+    gap: 6,
+  },
+  editInlineText: {
+    ...Typography.caption,
+    color: Colors.primary,
+    fontWeight: '600',
+  },
   compatibilityCard: {
     backgroundColor: Colors.primary,
     borderRadius: 20,
@@ -401,6 +590,21 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.primary,
     fontWeight: '600',
+  },
+  updateHintCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 16,
+    gap: 12,
+  },
+  updateHintText: {
+    ...Typography.bodySmall,
+    color: Colors.textLight,
+    flex: 1,
+    fontStyle: 'italic',
   },
   chartContainer: {
     backgroundColor: Colors.surface,
@@ -480,8 +684,113 @@ const styles = StyleSheet.create({
     ...Typography.button,
     color: Colors.primary,
   },
+  tertiaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.surface,
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  tertiaryButtonText: {
+    ...Typography.body,
+    color: Colors.textLight,
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    gap: 8,
+    marginTop: 8,
+  },
+  deleteButtonText: {
+    ...Typography.body,
+    color: Colors.error,
+  },
   errorText: {
     ...Typography.body,
     color: Colors.error,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  modalTitle: {
+    ...Typography.h2,
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    ...Typography.bodySmall,
+    fontWeight: '600',
+    color: Colors.text,
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: Colors.text,
+  },
+  typeButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  typeButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  typeButtonActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  typeButtonText: {
+    ...Typography.bodySmall,
+    color: Colors.text,
+  },
+  typeButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  saveButton: {
+    backgroundColor: Colors.primary,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  saveButtonDisabled: {
+    opacity: 0.7,
+  },
+  saveButtonText: {
+    ...Typography.button,
+    color: '#FFFFFF',
   },
 });

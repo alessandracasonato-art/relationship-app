@@ -31,8 +31,9 @@ interface Phase2Data {
   area_scores: Record<string, number>;
   initial_compatibility: number | null;
   awareness_plan: {
-    harmony_areas: Array<{ area: string; score: number }>;
-    observe_areas: Array<{ area: string; score: number }>;
+    harmony_areas: Array<{ area: string; score: number; weight?: number }>;
+    observe_areas: Array<{ area: string; score: number; weight?: number }>;
+    all_area_scores?: Array<{ area: string; area_id: string; score: number; weight: number }>;
     summary: string;
   } | null;
 }
@@ -89,7 +90,7 @@ function Phase2Introduction({
             </View>
           )}
           <Text style={styles.introSubtitle}>
-            Analizzerai la tua relazione attraverso 5 aree tematiche per comprendere meglio le dinamiche e ricevere un indice di compatibilità.
+            {"Ora esplori una relazione attraverso la tua percezione.\nNon stai definendo l'altro, ma osservando come questa relazione si manifesta per te."}
           </Text>
         </View>
 
@@ -328,6 +329,8 @@ export default function Phase2() {
 
   // Show results page
   if (showResults && phase2Data?.awareness_plan) {
+    const allAreaScores = phase2Data.awareness_plan.all_area_scores || [];
+    
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
@@ -348,9 +351,46 @@ export default function Phase2() {
               {Math.round(phase2Data.initial_compatibility || 0)}%
             </Text>
             <Text style={styles.compatibilityNote}>
-              Questo indice rappresenta una fotografia della tua percezione attuale della relazione.
+              {"Questo risultato non definisce la relazione, ma offre una fotografia del momento.\nPuò cambiare nel tempo, così come evolve ciò che vivi."}
             </Text>
           </View>
+
+          {/* Panoramica punteggi per area */}
+          {allAreaScores.length > 0 && (
+            <View style={styles.areaSection}>
+              <View style={styles.areaSectionHeader}>
+                <Ionicons name="bar-chart-outline" size={22} color={Colors.primary} />
+                <Text style={styles.areaSectionTitle}>Punteggi per area</Text>
+              </View>
+              {allAreaScores.map((area: any, index: number) => (
+                <View key={index} style={styles.areaScoreRow}>
+                  <View style={styles.areaScoreInfo}>
+                    <Text style={styles.areaItemName}>{area.area}</Text>
+                    <Text style={styles.areaWeightText}>peso: {area.weight}%</Text>
+                  </View>
+                  <View style={styles.areaScoreBarContainer}>
+                    <View style={styles.areaScoreBarBg}>
+                      <View 
+                        style={[
+                          styles.areaScoreBarFill, 
+                          { 
+                            width: `${Math.min(area.score, 100)}%`,
+                            backgroundColor: area.score >= 70 ? Colors.harmony : Colors.observe,
+                          }
+                        ]} 
+                      />
+                    </View>
+                    <Text style={[
+                      styles.areaScoreValue,
+                      { color: area.score >= 70 ? Colors.harmony : Colors.observe }
+                    ]}>
+                      {area.score}%
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
 
           {phase2Data.awareness_plan.harmony_areas.length > 0 && (
             <View style={styles.areaSection}>
@@ -358,7 +398,7 @@ export default function Phase2() {
                 <Ionicons name="sunny-outline" size={22} color={Colors.harmony} />
                 <Text style={styles.areaSectionTitle}>Aree di armonia</Text>
               </View>
-              {phase2Data.awareness_plan.harmony_areas.map((area, index) => (
+              {phase2Data.awareness_plan.harmony_areas.map((area: any, index: number) => (
                 <View key={index} style={styles.areaItem}>
                   <Text style={styles.areaItemName}>{area.area}</Text>
                   <View style={styles.areaItemScore}>
@@ -375,7 +415,7 @@ export default function Phase2() {
                 <Ionicons name="eye-outline" size={22} color={Colors.observe} />
                 <Text style={styles.areaSectionTitle}>Aree da osservare</Text>
               </View>
-              {phase2Data.awareness_plan.observe_areas.map((area, index) => (
+              {phase2Data.awareness_plan.observe_areas.map((area: any, index: number) => (
                 <View key={index} style={styles.areaItem}>
                   <Text style={styles.areaItemName}>{area.area}</Text>
                   <View style={[styles.areaItemScore, styles.areaItemScoreObserve]}>
@@ -956,6 +996,45 @@ const styles = StyleSheet.create({
   },
   areaItemScoreTextObserve: {
     color: Colors.observe,
+  },
+  // Area score bar styles
+  areaScoreRow: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  areaScoreInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  areaWeightText: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontStyle: 'italic',
+  },
+  areaScoreBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  areaScoreBarBg: {
+    flex: 1,
+    height: 8,
+    backgroundColor: Colors.border,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  areaScoreBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  areaScoreValue: {
+    ...Typography.bodySmall,
+    fontWeight: '700',
+    width: 44,
+    textAlign: 'right',
   },
   summaryCard: {
     backgroundColor: Colors.surface,

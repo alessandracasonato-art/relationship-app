@@ -47,7 +47,7 @@ function Introduction({ onStart }: { onStart: () => void }) {
           </View>
           <Text style={styles.introTitle}>Il tuo percorso di consapevolezza</Text>
           <Text style={styles.introSubtitle}>
-            Questo strumento ti guiderà attraverso un percorso di riflessione sulle tue relazioni.
+            {"Questa fase è dedicata a te.\nNon ci sono risposte giuste o sbagliate, ma osservazioni che ti aiutano a riconoscerti nel modo in cui vivi le relazioni."}
           </Text>
         </View>
 

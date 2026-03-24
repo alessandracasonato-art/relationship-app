@@ -478,6 +478,15 @@ PHASE2_AREAS = {
 
 PHASE2_AREA_ORDER = ["comunicazione", "valori", "bisogni_emotivi", "conflitto", "stabilita"]
 
+# Pesi per il calcolo della media pesata dell'indice di compatibilità
+AREA_WEIGHTS = {
+    "comunicazione": 0.25,
+    "bisogni_emotivi": 0.25,
+    "valori": 0.20,
+    "conflitto": 0.15,
+    "stabilita": 0.15,
+}
+
 # ==================== MONITORING QUESTIONS ====================
 
 MONITORING_QUESTIONS = [
@@ -739,6 +748,57 @@ async def delete_relationship(relationship_id: str, current_user: dict = Depends
     
     return {"message": "Relazione eliminata"}
 
+class RelationshipUpdate(BaseModel):
+    person_name: Optional[str] = None
+    relationship_type: Optional[str] = None
+
+@api_router.put("/relationships/{relationship_id}", response_model=RelationshipResponse)
+async def update_relationship(relationship_id: str, data: RelationshipUpdate, current_user: dict = Depends(get_current_user)):
+    rel = await db.relationships.find_one({"id": relationship_id, "user_id": current_user["id"]})
+    if not rel:
+        raise HTTPException(status_code=404, detail="Relazione non trovata")
+    
+    update_data = {}
+    if data.person_name is not None:
+        update_data["person_name"] = data.person_name
+    if data.relationship_type is not None:
+        update_data["relationship_type"] = data.relationship_type
+    
+    if update_data:
+        await db.relationships.update_one(
+            {"id": relationship_id},
+            {"$set": update_data}
+        )
+    
+    # Fetch updated relationship
+    rel = await db.relationships.find_one({"id": relationship_id})
+    
+    # Get phase2 and monitoring status
+    phase2 = await db.phase2_responses.find_one({"relationship_id": relationship_id})
+    phase2_completed = phase2 is not None and phase2.get("initial_compatibility") is not None
+    
+    latest_monitoring = await db.monitoring.find_one(
+        {"relationship_id": relationship_id},
+        sort=[("created_at", -1)]
+    )
+    
+    latest_compatibility = None
+    if latest_monitoring:
+        latest_compatibility = latest_monitoring.get("compatibility")
+    elif phase2 and phase2.get("initial_compatibility"):
+        latest_compatibility = phase2["initial_compatibility"]
+    
+    return RelationshipResponse(
+        id=rel["id"],
+        user_id=rel["user_id"],
+        person_name=rel["person_name"],
+        relationship_type=rel.get("relationship_type"),
+        created_at=rel["created_at"],
+        phase2_completed=phase2_completed,
+        latest_compatibility=latest_compatibility,
+        monitoring_active=rel.get("monitoring_active", False)
+    )
+
 # ==================== PHASE 2 ENDPOINTS ====================
 
 @api_router.get("/phase2/areas")
@@ -801,23 +861,37 @@ async def submit_phase2_area(relationship_id: str, data: Phase2AreaSubmit, curre
     awareness_plan = None
     
     if set(completed_areas) == set(PHASE2_AREA_ORDER):
-        # All areas completed - calculate final compatibility
-        initial_compatibility = sum(area_scores.values()) / len(area_scores)
+        # All areas completed - calculate weighted compatibility
+        initial_compatibility = sum(
+            area_scores[area] * AREA_WEIGHTS.get(area, 0.20)
+            for area in area_scores
+        )
         
-        # Generate awareness plan
+        # Generate awareness plan with individual area scores
         harmony_areas = []
         observe_areas = []
+        all_area_scores = []
         
-        for area_id, score in area_scores.items():
+        for area_id in PHASE2_AREA_ORDER:
+            score = area_scores.get(area_id, 0)
             area_name = PHASE2_AREAS[area_id]["name"]
+            weight = AREA_WEIGHTS.get(area_id, 0.20)
+            area_entry = {
+                "area": area_name,
+                "area_id": area_id,
+                "score": round(score, 1),
+                "weight": round(weight * 100),
+            }
+            all_area_scores.append(area_entry)
             if score >= 70:
-                harmony_areas.append({"area": area_name, "score": round(score, 1)})
+                harmony_areas.append(area_entry)
             else:
-                observe_areas.append({"area": area_name, "score": round(score, 1)})
+                observe_areas.append(area_entry)
         
         awareness_plan = {
             "harmony_areas": harmony_areas,
             "observe_areas": observe_areas,
+            "all_area_scores": all_area_scores,
             "summary": "Questo piano di consapevolezza evidenzia le aree di forza della tua relazione e quelle che potrebbero beneficiare di maggiore attenzione nel tempo."
         }
     
@@ -840,6 +914,19 @@ async def submit_phase2_area(relationship_id: str, data: Phase2AreaSubmit, curre
     )
     
     return Phase2Response(**response_doc)
+
+@api_router.delete("/phase2/{relationship_id}/reset")
+async def reset_phase2(relationship_id: str, current_user: dict = Depends(get_current_user)):
+    """Reset Phase 2 responses to allow user to redo the analysis"""
+    # Verify relationship belongs to user
+    rel = await db.relationships.find_one({"id": relationship_id, "user_id": current_user["id"]})
+    if not rel:
+        raise HTTPException(status_code=404, detail="Relazione non trovata")
+    
+    # Delete existing Phase 2 responses
+    await db.phase2_responses.delete_many({"relationship_id": relationship_id})
+    
+    return {"message": "Analisi resettata. Puoi ricominciare la Fase 2."}
 
 # ==================== MONITORING ENDPOINTS ====================
 

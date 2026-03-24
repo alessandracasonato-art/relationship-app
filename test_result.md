@@ -209,6 +209,12 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ Comprehensive testing passed. Phase 2 area submission works correctly with sequential area completion, compatibility calculation, and awareness plan generation. All 5 areas completed successfully with final compatibility score calculation."
+      - working: "NA"
+        agent: "main"
+        comment: "MODIFIED: Changed compatibility calculation from simple average to weighted average. Weights: comunicazione 25%, bisogni_emotivi 25%, valori 20%, conflitto 15%, stabilita 15%. Added all_area_scores array to awareness_plan with area_id, score, and weight per area. Needs retesting."
+      - working: true
+        agent: "testing"
+        comment: "✅ WEIGHTED COMPATIBILITY VERIFIED: Tested with specific values (comunicazione:100%, valori:25%, bisogni_emotivi:100%, conflitto:50%, stabilita:75%). Calculated weighted average: 73.75% (correct) vs simple average: 70% (incorrect). All requirements met: 1) initial_compatibility uses weighted calculation, 2) all_area_scores array contains 5 entries with area, area_id, score, weight fields, 3) harmony_areas (score>=70): comunicazione, bisogni_emotivi, stabilita, 4) observe_areas (score<70): valori, conflitto, 5) all areas have weight field. Weighted calculation working perfectly."
 
   - task: "Monitoring Questions API"
     implemented: true
@@ -391,3 +397,7 @@ agent_communication:
     message: "MVP implementation complete. All backend APIs and frontend screens implemented. Backend needs curl testing for auth flow, phase 1, phase 2, relationships, monitoring. Frontend landing and registration verified via screenshots."
   - agent: "testing"
     message: "✅ BACKEND TESTING COMPLETE: All 11 backend APIs tested successfully in full user flow sequence. Registration → Login → Phase1 → Relationships → Phase2 → Monitoring → Resources → Dashboard → Notifications all working perfectly. Full test suite passed (14/14 tests). Backend is production-ready."
+  - agent: "main"
+    message: "Modified Phase 2 Submit Area API to use weighted average for compatibility calculation. Weights: comunicazione 25%, bisogni_emotivi 25%, valori 20%, conflitto 15%, stabilita 15%. Also added all_area_scores array to awareness_plan response. Please test: 1) Register new user, 2) Complete Phase 1, 3) Create relationship, 4) Complete all 5 Phase 2 areas, 5) Verify the final compatibility uses weighted average (not simple average), 6) Verify awareness_plan contains all_area_scores array with area_id, score, and weight fields, 7) Verify harmony_areas and observe_areas are still correctly classified based on score >= 70."
+  - agent: "testing"
+    message: "✅ WEIGHTED COMPATIBILITY TESTING COMPLETE: Thoroughly tested Phase 2 weighted compatibility calculation with exact test values. VERIFIED: 1) Weighted average calculation (73.75%) vs simple average (70%) - CORRECT, 2) all_area_scores array with 5 entries containing area, area_id, score, weight fields - PRESENT, 3) harmony_areas classification (score>=70): comunicazione, bisogni_emotivi, stabilita - CORRECT, 4) observe_areas classification (score<70): valori, conflitto - CORRECT, 5) weight fields in all area entries - PRESENT. All requirements met perfectly. Backend weighted compatibility feature is production-ready."
