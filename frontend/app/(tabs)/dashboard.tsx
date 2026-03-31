@@ -114,6 +114,21 @@ export default function Dashboard() {
           </Text>
         </View>
 
+        {/* Video Introduttivo Banner */}
+        <TouchableOpacity
+          style={styles.videoBanner}
+          onPress={() => router.push('/intro-video')}
+        >
+          <View style={styles.videoBannerIcon}>
+            <Ionicons name="play-circle" size={32} color={Colors.secondary} />
+          </View>
+          <View style={styles.videoBannerText}>
+            <Text style={styles.videoBannerTitle}>Introduzione</Text>
+            <Text style={styles.videoBannerSubtitle}>Guarda il video di benvenuto</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={Colors.secondary} />
+        </TouchableOpacity>
+
         {/* Notifications */}
         {unreadCount > 0 && (
           <View style={styles.notificationSection}>
@@ -274,6 +289,36 @@ const styles = StyleSheet.create({
   subtitle: {
     ...Typography.body,
     color: Colors.textLight,
+  },
+  videoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primaryDark,
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 20,
+  },
+  videoBannerIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: Colors.secondary + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  videoBannerText: {
+    flex: 1,
+  },
+  videoBannerTitle: {
+    ...Typography.body,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  videoBannerSubtitle: {
+    ...Typography.caption,
+    color: Colors.secondary,
+    marginTop: 2,
   },
   notificationSection: {
     marginBottom: 20,
