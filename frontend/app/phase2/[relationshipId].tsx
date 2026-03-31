@@ -157,7 +157,7 @@ function Phase2Introduction({
 
         <View style={styles.timeCard}>
           <Ionicons name="time-outline" size={20} color={Colors.textMuted} />
-          <Text style={styles.timeText}>Tempo stimato: ~10 minuti (15 domande totali)</Text>
+          <Text style={styles.timeText}>Tempo stimato: ~12 minuti (20 domande totali)</Text>
         </View>
       </ScrollView>
 

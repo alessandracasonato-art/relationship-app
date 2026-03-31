@@ -192,6 +192,17 @@ PHASE1_QUESTIONS = [
             {"value": 1, "label": "Mi porta a chiudermi o a prendere distanza"}
         ]
     },
+    {
+        "id": "energia_3",
+        "category": "energia_relazionale",
+        "text": "Quando stai bene con qualcuno, tendi a:",
+        "options": [
+            {"value": 4, "label": "Cercare ancora quel contatto"},
+            {"value": 3, "label": "Goderti il momento"},
+            {"value": 2, "label": "Tornare al tuo spazio"},
+            {"value": 1, "label": "Non farci troppo caso"}
+        ]
+    },
     # 2️⃣ Gestione emotiva
     {
         "id": "gestione_1",
@@ -213,6 +224,17 @@ PHASE1_QUESTIONS = [
             {"value": 3, "label": "Filtrarla"},
             {"value": 2, "label": "Trattenerla"},
             {"value": 1, "label": "Non comprenderla subito"}
+        ]
+    },
+    {
+        "id": "gestione_3",
+        "category": "gestione_emotiva",
+        "text": "Quando qualcosa non ti torna in una relazione:",
+        "options": [
+            {"value": 4, "label": "Lo affronti"},
+            {"value": 3, "label": "Lo osservi"},
+            {"value": 2, "label": "Lo ignori"},
+            {"value": 1, "label": "Ti crea disagio ma non agisci"}
         ]
     },
     # 3️⃣ Bisogni relazionali
@@ -238,6 +260,17 @@ PHASE1_QUESTIONS = [
             {"value": 1, "label": "Confonderti"}
         ]
     },
+    {
+        "id": "bisogni_3",
+        "category": "bisogni_relazionali",
+        "text": "Ti accorgi facilmente di ciò di cui hai bisogno in una relazione?",
+        "options": [
+            {"value": 4, "label": "Sempre"},
+            {"value": 3, "label": "Spesso"},
+            {"value": 2, "label": "A volte"},
+            {"value": 1, "label": "Raramente"}
+        ]
+    },
     # 4️⃣ Stile decisionale
     {
         "id": "decisionale_1",
@@ -261,6 +294,17 @@ PHASE1_QUESTIONS = [
             {"value": 1, "label": "Evitarlo"}
         ]
     },
+    {
+        "id": "decisionale_3",
+        "category": "stile_decisionale",
+        "text": "Quando una relazione non ti convince:",
+        "options": [
+            {"value": 4, "label": "Prendi posizione"},
+            {"value": 3, "label": "Rifletti a lungo"},
+            {"value": 2, "label": "Rimani nel dubbio"},
+            {"value": 1, "label": "Eviti di decidere"}
+        ]
+    },
     # 5️⃣ Reazione al cambiamento
     {
         "id": "cambiamento_1",
@@ -282,6 +326,17 @@ PHASE1_QUESTIONS = [
             {"value": 3, "label": "Aspettare"},
             {"value": 2, "label": "Allontanarti"},
             {"value": 1, "label": "Non sapere cosa fare"}
+        ]
+    },
+    {
+        "id": "cambiamento_3",
+        "category": "reazione_cambiamento",
+        "text": "Quando qualcosa migliora in una relazione:",
+        "options": [
+            {"value": 4, "label": "Ti fidi subito"},
+            {"value": 3, "label": "Osservi nel tempo"},
+            {"value": 2, "label": "Resti cauto/a"},
+            {"value": 1, "label": "Fatichi a crederci"}
         ]
     },
 ]
@@ -331,6 +386,16 @@ PHASE2_AREAS = {
                     {"value": 2, "label": "Poco"},
                     {"value": 1, "label": "No"}
                 ]
+            },
+            {
+                "id": "p2_comm_4",
+                "text": "Quando comunichi qualcosa di importante:",
+                "options": [
+                    {"value": 4, "label": "Ti senti accolto/a"},
+                    {"value": 3, "label": "Dipende dal momento"},
+                    {"value": 2, "label": "Spesso non ti senti capito/a"},
+                    {"value": 1, "label": "Eviti"}
+                ]
             }
         ]
     },
@@ -366,6 +431,16 @@ PHASE2_AREAS = {
                     {"value": 2, "label": "Spesso"},
                     {"value": 1, "label": "Quasi sempre"}
                 ]
+            },
+            {
+                "id": "p2_val_4",
+                "text": "Senti che prendete decisioni importanti in modo simile?",
+                "options": [
+                    {"value": 4, "label": "Sì"},
+                    {"value": 3, "label": "Abbastanza"},
+                    {"value": 2, "label": "Poco"},
+                    {"value": 1, "label": "No"}
+                ]
             }
         ]
     },
@@ -399,6 +474,16 @@ PHASE2_AREAS = {
                     {"value": 4, "label": "C'è"},
                     {"value": 3, "label": "A volte"},
                     {"value": 2, "label": "Raramente"},
+                    {"value": 1, "label": "No"}
+                ]
+            },
+            {
+                "id": "p2_emo_4",
+                "text": "Ti senti libero/a di essere te stesso/a in questa relazione?",
+                "options": [
+                    {"value": 4, "label": "Sempre"},
+                    {"value": 3, "label": "Spesso"},
+                    {"value": 2, "label": "Poco"},
                     {"value": 1, "label": "No"}
                 ]
             }
@@ -436,6 +521,16 @@ PHASE2_AREAS = {
                     {"value": 2, "label": "Poco"},
                     {"value": 1, "label": "Non ascoltato/a"}
                 ]
+            },
+            {
+                "id": "p2_conf_4",
+                "text": "I conflitti portano a maggiore chiarezza o distanza?",
+                "options": [
+                    {"value": 4, "label": "Chiarezza"},
+                    {"value": 3, "label": "A volte"},
+                    {"value": 2, "label": "Distanza"},
+                    {"value": 1, "label": "Confusione"}
+                ]
             }
         ]
     },
@@ -471,6 +566,16 @@ PHASE2_AREAS = {
                     {"value": 2, "label": "Poco"},
                     {"value": 1, "label": "No"}
                 ]
+            },
+            {
+                "id": "p2_stab_4",
+                "text": "Sai cosa aspettarti da questa persona nel tempo?",
+                "options": [
+                    {"value": 4, "label": "Sì"},
+                    {"value": 3, "label": "Abbastanza"},
+                    {"value": 2, "label": "Poco"},
+                    {"value": 1, "label": "No"}
+                ]
             }
         ]
     }
@@ -495,6 +600,16 @@ MONITORING_QUESTIONS = [
     {"id": "mon_3", "text": "La comunicazione è stata più facile o più difficile?"},
     {"id": "mon_4", "text": "Ti sei sentito/a più o meno connesso/a?"},
 ]
+
+# ==================== INTRO VIDEO ENDPOINT ====================
+
+@api_router.get("/intro-video")
+async def get_intro_video():
+    """Get the intro video URL if uploaded"""
+    video = await db.settings.find_one({"key": "intro_video"})
+    if video and video.get("url"):
+        return {"url": video["url"], "has_video": True}
+    return {"url": None, "has_video": False}
 
 # ==================== AUTH ENDPOINTS ====================
 

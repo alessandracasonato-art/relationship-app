@@ -65,7 +65,7 @@ function Introduction({ onStart }: { onStart: () => void }) {
               </Text>
               <View style={styles.phaseInfo}>
                 <Ionicons name="time-outline" size={14} color={Colors.textMuted} />
-                <Text style={styles.phaseInfoText}>~5 minuti • 10 domande</Text>
+                <Text style={styles.phaseInfoText}>~7 minuti • 15 domande</Text>
               </View>
             </View>
           </View>
@@ -81,7 +81,7 @@ function Introduction({ onStart }: { onStart: () => void }) {
               </Text>
               <View style={styles.phaseInfo}>
                 <Ionicons name="time-outline" size={14} color={Colors.textMuted} />
-                <Text style={styles.phaseInfoText}>~10 minuti • 15 domande</Text>
+                <Text style={styles.phaseInfoText}>~12 minuti • 20 domande</Text>
               </View>
             </View>
           </View>
@@ -114,7 +114,7 @@ function Introduction({ onStart }: { onStart: () => void }) {
           <Text style={styles.currentPhaseLabel}>Inizierai con</Text>
           <Text style={styles.currentPhaseTitle}>Fase 1: Conoscenza di Sé</Text>
           <Text style={styles.currentPhaseDescription}>
-            Ti verranno poste 10 domande per comprendere il tuo stile relazionale. Prenditi il tempo necessario per riflettere su ogni domanda.
+            Ti verranno poste 15 domande per comprendere il tuo stile relazionale. Prenditi il tempo necessario per riflettere su ogni domanda.
           </Text>
         </View>
       </ScrollView>

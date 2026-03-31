@@ -15,7 +15,7 @@ export default function Index() {
       if (user?.has_completed_phase1) {
         router.replace('/(tabs)/dashboard');
       } else {
-        router.replace('/phase1');
+        router.replace('/intro-video');
       }
     }
   }, [isAuthenticated, user]);

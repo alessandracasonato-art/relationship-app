@@ -27,6 +27,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="intro-video" />
         <Stack.Screen name="phase1" />
         <Stack.Screen name="phase2/[relationshipId]" />
         <Stack.Screen name="monitoring/[relationshipId]" />
