@@ -13,6 +13,7 @@ import { Video, ResizeMode } from 'expo-av';
 import { Colors } from '../src/constants/colors';
 import { Typography } from '../src/constants/typography';
 import api from '../src/services/api';
+import Logo from '../src/components/Logo';
 
 export default function IntroVideo() {
   const router = useRouter();
@@ -101,9 +102,8 @@ export default function IntroVideo() {
           </View>
         ) : (
           <View style={styles.placeholderSection}>
-            <View style={styles.placeholderIcon}>
-              <Ionicons name="videocam-outline" size={56} color={Colors.secondary} />
-            </View>
+            <Logo size="large" />
+            <View style={{ height: 32 }} />
             <Text style={styles.title}>Benvenuto nel tuo percorso</Text>
             <Text style={styles.subtitle}>
               {"Il video introduttivo sarà disponibile a breve.\nNel frattempo, puoi iniziare il tuo percorso di consapevolezza relazionale."}

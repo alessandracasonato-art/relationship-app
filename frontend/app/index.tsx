@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/store/authStore';
 import { Colors } from '../src/constants/colors';
 import { Typography } from '../src/constants/typography';
-import { Ionicons } from '@expo/vector-icons';
+import Logo from '../src/components/Logo';
 
 export default function Index() {
   const router = useRouter();
@@ -23,8 +23,7 @@ export default function Index() {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Ionicons name="heart-outline" size={64} color={Colors.primary} />
-        <Text style={styles.title}>Consapevolezza{"\n"}Relazionale</Text>
+        <Logo size="large" />
         <Text style={styles.subtitle}>
           Comprendi meglio le tue relazioni attraverso riflessione guidata e monitoraggio nel tempo.
         </Text>
@@ -62,17 +61,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: {
-    ...Typography.h1,
-    textAlign: 'center',
-    marginTop: 24,
-    marginBottom: 16,
-  },
   subtitle: {
     ...Typography.body,
     textAlign: 'center',
     color: Colors.textLight,
     paddingHorizontal: 20,
+    marginTop: 28,
   },
   buttons: {
     gap: 12,

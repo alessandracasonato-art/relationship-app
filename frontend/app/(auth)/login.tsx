@@ -17,6 +17,7 @@ import { Colors } from '../../src/constants/colors';
 import { Typography } from '../../src/constants/typography';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Logo from '../../src/components/Logo';
 
 export default function Login() {
   const router = useRouter();
@@ -60,6 +61,7 @@ export default function Login() {
           </TouchableOpacity>
 
           <View style={styles.header}>
+            <Logo size="small" showText={true} />
             <Text style={styles.title}>Bentornato</Text>
             <Text style={styles.subtitle}>
               Accedi per continuare il tuo percorso di consapevolezza.
