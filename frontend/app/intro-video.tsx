@@ -31,20 +31,24 @@ export default function IntroVideo() {
   const [hasFinished, setHasFinished] = useState(false);
 
   useEffect(() => {
-    setupAudio();
-    fetchVideoUrl();
+    initializeScreen();
   }, []);
 
-  const setupAudio = async () => {
+  const initializeScreen = async () => {
+    // MUST set audio mode BEFORE loading the video
     try {
       await Audio.setAudioModeAsync({
         playsInSilentModeIOS: true,
+        allowsRecordingIOS: false,
         staysActiveInBackground: false,
         shouldDuckAndroid: true,
       });
+      console.log('Audio mode configured: playsInSilentModeIOS=true');
     } catch (error) {
       console.log('Audio setup error:', error);
     }
+    // Only then fetch video URL
+    await fetchVideoUrl();
   };
 
   const fetchVideoUrl = async () => {
