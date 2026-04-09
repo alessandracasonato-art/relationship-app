@@ -802,19 +802,27 @@ async def submit_phase1(data: Phase1Submit, current_user: dict = Depends(get_cur
 @api_router.get("/relationships", response_model=List[RelationshipResponse])
 async def get_relationships(current_user: dict = Depends(get_current_user)):
     relationships = await db.relationships.find({"user_id": current_user["id"]}).to_list(100)
-    result = []
+    if not relationships:
+        return []
     
+    rel_ids = [rel["id"] for rel in relationships]
+    
+    # Batch fetch phase2 and monitoring data
+    phase2_docs = await db.phase2_responses.find({"relationship_id": {"$in": rel_ids}}).to_list(100)
+    phase2_map = {p["relationship_id"]: p for p in phase2_docs}
+    
+    monitoring_docs = await db.monitoring.find({"relationship_id": {"$in": rel_ids}}).sort("created_at", -1).to_list(1000)
+    monitoring_map = {}
+    for m in monitoring_docs:
+        if m["relationship_id"] not in monitoring_map:
+            monitoring_map[m["relationship_id"]] = m
+    
+    result = []
     for rel in relationships:
-        # Check phase2 status
-        phase2 = await db.phase2_responses.find_one({"relationship_id": rel["id"]})
+        phase2 = phase2_map.get(rel["id"])
         phase2_completed = phase2 is not None and phase2.get("initial_compatibility") is not None
         
-        # Get latest monitoring
-        latest_monitoring = await db.monitoring.find_one(
-            {"relationship_id": rel["id"]},
-            sort=[("created_at", -1)]
-        )
-        
+        latest_monitoring = monitoring_map.get(rel["id"])
         latest_compatibility = None
         if latest_monitoring:
             latest_compatibility = latest_monitoring.get("compatibility")
@@ -1260,27 +1268,37 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     relationships = await db.relationships.find({"user_id": current_user["id"]}).to_list(10)
     relationships_data = []
     
-    for rel in relationships:
-        phase2 = await db.phase2_responses.find_one({"relationship_id": rel["id"]})
-        latest_monitoring = await db.monitoring.find_one(
-            {"relationship_id": rel["id"]},
-            sort=[("created_at", -1)]
-        )
+    if relationships:
+        rel_ids = [rel["id"] for rel in relationships]
         
-        compatibility = None
-        if latest_monitoring:
-            compatibility = latest_monitoring["compatibility"]
-        elif phase2 and phase2.get("initial_compatibility"):
-            compatibility = phase2["initial_compatibility"]
+        # Batch fetch phase2 and monitoring data
+        phase2_docs = await db.phase2_responses.find({"relationship_id": {"$in": rel_ids}}).to_list(100)
+        phase2_map = {p["relationship_id"]: p for p in phase2_docs}
         
-        relationships_data.append({
-            "id": rel["id"],
-            "person_name": rel["person_name"],
-            "relationship_type": rel.get("relationship_type"),
-            "phase2_completed": phase2 is not None and phase2.get("initial_compatibility") is not None,
-            "compatibility": compatibility,
-            "monitoring_active": rel.get("monitoring_active", False)
-        })
+        monitoring_docs = await db.monitoring.find({"relationship_id": {"$in": rel_ids}}).sort("created_at", -1).to_list(1000)
+        monitoring_map = {}
+        for m in monitoring_docs:
+            if m["relationship_id"] not in monitoring_map:
+                monitoring_map[m["relationship_id"]] = m
+        
+        for rel in relationships:
+            phase2 = phase2_map.get(rel["id"])
+            latest_monitoring = monitoring_map.get(rel["id"])
+            
+            compatibility = None
+            if latest_monitoring:
+                compatibility = latest_monitoring["compatibility"]
+            elif phase2 and phase2.get("initial_compatibility"):
+                compatibility = phase2["initial_compatibility"]
+            
+            relationships_data.append({
+                "id": rel["id"],
+                "person_name": rel["person_name"],
+                "relationship_type": rel.get("relationship_type"),
+                "phase2_completed": phase2 is not None and phase2.get("initial_compatibility") is not None,
+                "compatibility": compatibility,
+                "monitoring_active": rel.get("monitoring_active", False)
+            })
     
     return {
         "phase1_completed": phase1 is not None,
