@@ -51,17 +51,12 @@ export default function IntroVideo() {
     try {
       const res = await api.get('/intro-video');
       if (res.data.has_video && res.data.url) {
-        // Build full URL if the path is relative
-        let fullUrl = res.data.url;
-        if (fullUrl.startsWith('/')) {
-          const baseUrl = process.env.EXPO_PUBLIC_BACKEND_URL || '';
-          fullUrl = baseUrl + fullUrl;
-        }
-        setVideoUrl(fullUrl);
+        console.log('Video URL:', res.data.url);
+        setVideoUrl(res.data.url);
         setHasVideo(true);
       }
     } catch (error) {
-      console.log('No intro video available');
+      console.log('No intro video available:', error);
     } finally {
       setIsLoading(false);
     }

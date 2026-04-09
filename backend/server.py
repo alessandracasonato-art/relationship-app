@@ -613,25 +613,10 @@ MONITORING_QUESTIONS = [
 @api_router.get("/intro-video")
 async def get_intro_video():
     """Get the intro video URL if uploaded"""
-    video_path = STATIC_DIR / "intro_video.mp4"
-    if video_path.exists():
-        return {"url": "/api/intro-video/stream", "has_video": True}
     video = await db.settings.find_one({"key": "intro_video"})
     if video and video.get("url"):
         return {"url": video["url"], "has_video": True}
     return {"url": None, "has_video": False}
-
-@api_router.get("/intro-video/stream")
-async def stream_intro_video():
-    """Stream the intro video file"""
-    video_path = STATIC_DIR / "intro_video.mp4"
-    if not video_path.exists():
-        raise HTTPException(status_code=404, detail="Video not found")
-    return FileResponse(
-        str(video_path),
-        media_type="video/mp4",
-        filename="intro_video.mp4",
-    )
 
 # ==================== AUTH ENDPOINTS ====================
 
