@@ -18,8 +18,8 @@ import api from '../src/services/api';
 import Logo from '../src/components/Logo';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const VIDEO_WIDTH = SCREEN_WIDTH - 48; // 24px padding each side
-const VIDEO_HEIGHT = VIDEO_WIDTH * (16 / 9); // Portrait 9:16 ratio
+const VIDEO_WIDTH = SCREEN_WIDTH - 48;
+const VIDEO_HEIGHT = VIDEO_WIDTH * (16 / 9);
 
 export default function IntroVideo() {
   const router = useRouter();
@@ -27,15 +27,14 @@ export default function IntroVideo() {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [hasVideo, setHasVideo] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [hasFinished, setHasFinished] = useState(false);
+  const [audioReady, setAudioReady] = useState(false);
 
   useEffect(() => {
     initializeScreen();
   }, []);
 
   const initializeScreen = async () => {
-    // MUST set audio mode BEFORE loading the video
+    // MUST configure audio session BEFORE rendering video
     try {
       await Audio.setAudioModeAsync({
         playsInSilentModeIOS: true,
@@ -43,11 +42,12 @@ export default function IntroVideo() {
         staysActiveInBackground: false,
         shouldDuckAndroid: true,
       });
-      console.log('Audio mode configured: playsInSilentModeIOS=true');
+      setAudioReady(true);
+      console.log('Audio mode set: playsInSilentModeIOS=true');
     } catch (error) {
       console.log('Audio setup error:', error);
+      setAudioReady(true); // Continue anyway
     }
-    // Only then fetch video URL
     await fetchVideoUrl();
   };
 
@@ -55,7 +55,6 @@ export default function IntroVideo() {
     try {
       const res = await api.get('/intro-video');
       if (res.data.has_video && res.data.url) {
-        console.log('Video URL:', res.data.url);
         setVideoUrl(res.data.url);
         setHasVideo(true);
       }
@@ -70,16 +69,7 @@ export default function IntroVideo() {
     router.replace('/phase1');
   };
 
-  const handlePlaybackStatusUpdate = (status: any) => {
-    if (status.isLoaded) {
-      setIsPlaying(status.isPlaying);
-      if (status.didJustFinish) {
-        setHasFinished(true);
-      }
-    }
-  };
-
-  if (isLoading) {
+  if (isLoading || !audioReady) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
@@ -118,7 +108,6 @@ export default function IntroVideo() {
                 shouldPlay={false}
                 isMuted={false}
                 volume={1.0}
-                onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
               />
             </View>
 
@@ -226,7 +215,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
   },
-  // Video section - vertical/portrait
   videoScrollContent: {
     paddingHorizontal: 24,
     paddingBottom: 16,
@@ -260,7 +248,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
-  // Placeholder section (no video)
   placeholderSection: {
     flex: 1,
     justifyContent: 'center',
