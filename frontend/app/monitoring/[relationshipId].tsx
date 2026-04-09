@@ -252,7 +252,7 @@ export default function Monitoring() {
           >
             <Ionicons name="close" size={24} color={Colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Check-in Settimanale</Text>
+          <Text style={styles.headerTitle}>Check-in</Text>
           <View style={{ width: 44 }} />
         </View>
 
@@ -446,7 +446,7 @@ export default function Monitoring() {
             <Ionicons name="pulse-outline" size={48} color={Colors.textMuted} />
             <Text style={styles.emptyTitle}>Nessun check-in ancora</Text>
             <Text style={styles.emptyText}>
-              Fai il tuo primo check-in settimanale per iniziare a monitorare l'evoluzione della relazione.
+              Fai il tuo primo check-in per iniziare a monitorare l'evoluzione della relazione.
             </Text>
           </View>
         )}

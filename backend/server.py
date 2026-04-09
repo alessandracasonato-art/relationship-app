@@ -604,7 +604,7 @@ AREA_WEIGHTS = {
 # ==================== MONITORING QUESTIONS ====================
 
 MONITORING_QUESTIONS = [
-    {"id": "mon_1", "text": "È successo qualcosa di significativo nella relazione questa settimana?"},
+    {"id": "mon_1", "text": "È successo qualcosa di significativo nella relazione?"},
     {"id": "mon_2", "text": "La tua percezione della relazione è cambiata?"},
     {"id": "mon_3", "text": "La comunicazione è stata più facile o più difficile?"},
     {"id": "mon_4", "text": "Ti sei sentito/a più o meno connesso/a?"},
@@ -1220,7 +1220,7 @@ async def get_notifications(current_user: dict = Depends(get_current_user)):
                         "id": str(uuid.uuid4()),
                         "user_id": current_user["id"],
                         "notification_type": "checkin_reminder",
-                        "message": f"È tempo del check-in settimanale per la relazione con {rel['person_name']}!",
+                        "message": f"È il momento di un check-in per la relazione con {rel['person_name']}!",
                         "read": False,
                         "created_at": datetime.utcnow()
                     }

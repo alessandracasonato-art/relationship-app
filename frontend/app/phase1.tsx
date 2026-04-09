@@ -97,7 +97,7 @@ function Introduction({ onStart }: { onStart: () => void }) {
               </Text>
               <View style={styles.phaseInfo}>
                 <Ionicons name="time-outline" size={14} color={Colors.textMuted} />
-                <Text style={styles.phaseInfoText}>~2 minuti • settimanale</Text>
+                <Text style={styles.phaseInfoText}>~2 minuti • check-in</Text>
               </View>
             </View>
           </View>
