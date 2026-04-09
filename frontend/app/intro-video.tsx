@@ -34,7 +34,7 @@ export default function IntroVideo() {
   }, []);
 
   const initializeScreen = async () => {
-    // MUST configure audio session BEFORE rendering video
+    // Force iOS audio session into playback mode (overrides silent switch)
     try {
       await Audio.setAudioModeAsync({
         playsInSilentModeIOS: true,
@@ -42,11 +42,22 @@ export default function IntroVideo() {
         staysActiveInBackground: false,
         shouldDuckAndroid: true,
       });
+      
+      // Play a silent audio to force-activate the playback audio session on iOS
+      // This is a known workaround for the silent switch issue
+      const { sound } = await Audio.Sound.createAsync(
+        require('../assets/silent.mp3'),
+        { shouldPlay: true, volume: 0 }
+      );
+      // Wait briefly for audio session to activate
+      await new Promise(resolve => setTimeout(resolve, 300));
+      await sound.unloadAsync();
+      
       setAudioReady(true);
-      console.log('Audio mode set: playsInSilentModeIOS=true');
+      console.log('Audio session activated with playsInSilentModeIOS=true');
     } catch (error) {
       console.log('Audio setup error:', error);
-      setAudioReady(true); // Continue anyway
+      setAudioReady(true);
     }
     await fetchVideoUrl();
   };
