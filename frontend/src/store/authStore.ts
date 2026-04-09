@@ -5,6 +5,7 @@ import api from '../services/api';
 interface User {
   id: string;
   email: string;
+  name?: string | null;
   created_at: string;
   has_completed_phase1: boolean;
 }
@@ -15,7 +16,7 @@ interface AuthState {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
   setUser: (user: User) => void;
@@ -41,9 +42,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  register: async (email: string, password: string) => {
+  register: async (email: string, password: string, name?: string) => {
     try {
-      const response = await api.post('/auth/register', { email, password });
+      const response = await api.post('/auth/register', { email, password, name });
       const { access_token, user } = response.data;
       
       await AsyncStorage.setItem('token', access_token);

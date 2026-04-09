@@ -108,9 +108,9 @@ export default function Dashboard() {
         }
       >
         <View style={styles.header}>
-          <Text style={styles.greeting}>Ciao!</Text>
+          <Text style={styles.greeting}>Ciao{user?.name ? `, ${user.name}` : ''}!</Text>
           <Text style={styles.subtitle}>
-            Il tuo percorso di consapevolezza relazionale
+            Benvenuto nel tuo percorso di consapevolezza relazionale
           </Text>
         </View>
 

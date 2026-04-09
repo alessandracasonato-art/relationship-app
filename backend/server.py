@@ -54,6 +54,7 @@ logger = logging.getLogger(__name__)
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
+    name: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -62,6 +63,7 @@ class UserLogin(BaseModel):
 class UserResponse(BaseModel):
     id: str
     email: str
+    name: Optional[str] = None
     created_at: datetime
     has_completed_phase1: bool = False
 
@@ -631,6 +633,7 @@ async def register(user_data: UserCreate):
     user = {
         "id": user_id,
         "email": user_data.email.lower(),
+        "name": user_data.name,
         "password_hash": hash_password(user_data.password),
         "created_at": datetime.utcnow()
     }
@@ -658,6 +661,7 @@ async def register(user_data: UserCreate):
         user=UserResponse(
             id=user_id,
             email=user["email"],
+            name=user.get("name"),
             created_at=user["created_at"],
             has_completed_phase1=phase1 is not None
         )
@@ -679,6 +683,7 @@ async def login(user_data: UserLogin):
         user=UserResponse(
             id=user["id"],
             email=user["email"],
+            name=user.get("name"),
             created_at=user["created_at"],
             has_completed_phase1=phase1 is not None
         )
@@ -690,6 +695,7 @@ async def get_me(current_user: dict = Depends(get_current_user)):
     return UserResponse(
         id=current_user["id"],
         email=current_user["email"],
+        name=current_user.get("name"),
         created_at=current_user["created_at"],
         has_completed_phase1=phase1 is not None
     )

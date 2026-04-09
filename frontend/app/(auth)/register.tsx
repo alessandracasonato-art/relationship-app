@@ -23,13 +23,14 @@ export default function Register() {
   const router = useRouter();
   const { register } = useAuthStore();
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleRegister = async () => {
-    if (!email.trim() || !password.trim()) {
+    if (!name.trim() || !email.trim() || !password.trim()) {
       Alert.alert('Errore', 'Compila tutti i campi');
       return;
     }
@@ -46,8 +47,8 @@ export default function Register() {
 
     setIsLoading(true);
     try {
-      await register(email.toLowerCase().trim(), password);
-      router.replace('/phase1');
+      await register(email.toLowerCase().trim(), password, name.trim());
+      router.replace('/intro-video');
     } catch (error: any) {
       Alert.alert('Errore', error.message);
     } finally {
@@ -81,6 +82,19 @@ export default function Register() {
           </View>
 
           <View style={styles.form}>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Nome</Text>
+              <TextInput
+                style={styles.input}
+                value={name}
+                onChangeText={setName}
+                placeholder="Il tuo nome"
+                placeholderTextColor={Colors.textMuted}
+                autoCapitalize="words"
+                autoCorrect={false}
+              />
+            </View>
+
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Email</Text>
               <TextInput

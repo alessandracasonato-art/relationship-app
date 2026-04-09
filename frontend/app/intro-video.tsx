@@ -93,7 +93,12 @@ export default function IntroVideo() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <View style={{ width: 44 }} />
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Introduzione</Text>
         <TouchableOpacity
           style={styles.skipButton}
@@ -213,6 +218,12 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...Typography.h3,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   skipButton: {
     paddingVertical: 8,
