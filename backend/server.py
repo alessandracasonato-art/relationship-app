@@ -620,6 +620,15 @@ async def get_intro_video():
         return {"url": video["url"], "has_video": True}
     return {"url": None, "has_video": False}
 
+@api_router.get("/assets/{filename}")
+async def get_asset(filename: str):
+    """Serve static assets (icons, etc.)"""
+    from fastapi.responses import FileResponse as FR
+    file_path = STATIC_DIR / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    return FR(str(file_path), media_type="image/png")
+
 # ==================== AUTH ENDPOINTS ====================
 
 @api_router.post("/auth/register", response_model=TokenResponse)
