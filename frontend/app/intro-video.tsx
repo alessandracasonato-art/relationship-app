@@ -5,15 +5,21 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  Dimensions,
+  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Video, ResizeMode } from 'expo-av';
+import { Video, ResizeMode, Audio } from 'expo-av';
 import { Colors } from '../src/constants/colors';
 import { Typography } from '../src/constants/typography';
 import api from '../src/services/api';
 import Logo from '../src/components/Logo';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const VIDEO_WIDTH = SCREEN_WIDTH - 48; // 24px padding each side
+const VIDEO_HEIGHT = VIDEO_WIDTH * (16 / 9); // Portrait 9:16 ratio
 
 export default function IntroVideo() {
   const router = useRouter();
@@ -25,8 +31,21 @@ export default function IntroVideo() {
   const [hasFinished, setHasFinished] = useState(false);
 
   useEffect(() => {
+    setupAudio();
     fetchVideoUrl();
   }, []);
+
+  const setupAudio = async () => {
+    try {
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+        shouldDuckAndroid: true,
+      });
+    } catch (error) {
+      console.log('Audio setup error:', error);
+    }
+  };
 
   const fetchVideoUrl = async () => {
     try {
@@ -78,9 +97,12 @@ export default function IntroVideo() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.content}>
-        {hasVideo && videoUrl ? (
-          <View style={styles.videoSection}>
+      {hasVideo && videoUrl ? (
+        <>
+          <ScrollView
+            contentContainerStyle={styles.videoScrollContent}
+            showsVerticalScrollIndicator={false}
+          >
             <View style={styles.videoContainer}>
               <Video
                 ref={videoRef}
@@ -89,67 +111,80 @@ export default function IntroVideo() {
                 resizeMode={ResizeMode.CONTAIN}
                 useNativeControls
                 shouldPlay={false}
+                isMuted={false}
+                volume={1.0}
                 onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
               />
             </View>
 
             <View style={styles.textSection}>
-              <Text style={styles.title}>Benvenuto nel tuo percorso</Text>
-              <Text style={styles.subtitle}>
+              <Text style={styles.videoTitle}>Benvenuto nel tuo percorso</Text>
+              <Text style={styles.videoSubtitle}>
                 {"Guarda questo breve video introduttivo per comprendere come funziona lo strumento e come potrà aiutarti a sviluppare maggiore consapevolezza nelle tue relazioni."}
               </Text>
             </View>
+          </ScrollView>
+
+          <View style={styles.footer}>
+            <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
+              <Text style={styles.continueButtonText}>Inizia il percorso</Text>
+              <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
           </View>
-        ) : (
-          <View style={styles.placeholderSection}>
-            <Logo size="large" />
-            <View style={{ height: 32 }} />
-            <Text style={styles.title}>Benvenuto nel tuo percorso</Text>
-            <Text style={styles.subtitle}>
-              {"Il video introduttivo sarà disponibile a breve.\nNel frattempo, puoi iniziare il tuo percorso di consapevolezza relazionale."}
-            </Text>
-            
-            <View style={styles.infoCards}>
-              <View style={styles.infoCard}>
-                <View style={styles.infoIconContainer}>
-                  <Ionicons name="compass-outline" size={28} color={Colors.primary} />
+        </>
+      ) : (
+        <>
+          <View style={styles.content}>
+            <View style={styles.placeholderSection}>
+              <Logo size="large" />
+              <View style={{ height: 32 }} />
+              <Text style={styles.title}>Benvenuto nel tuo percorso</Text>
+              <Text style={styles.subtitle}>
+                {"Il video introduttivo sarà disponibile a breve.\nNel frattempo, puoi iniziare il tuo percorso di consapevolezza relazionale."}
+              </Text>
+              
+              <View style={styles.infoCards}>
+                <View style={styles.infoCard}>
+                  <View style={styles.infoIconContainer}>
+                    <Ionicons name="compass-outline" size={28} color={Colors.primary} />
+                  </View>
+                  <Text style={styles.infoTitle}>Esplora</Text>
+                  <Text style={styles.infoText}>
+                    Scopri il tuo stile relazionale attraverso domande mirate
+                  </Text>
                 </View>
-                <Text style={styles.infoTitle}>Esplora</Text>
-                <Text style={styles.infoText}>
-                  Scopri il tuo stile relazionale attraverso domande mirate
-                </Text>
-              </View>
 
-              <View style={styles.infoCard}>
-                <View style={styles.infoIconContainer}>
-                  <Ionicons name="analytics-outline" size={28} color={Colors.primary} />
+                <View style={styles.infoCard}>
+                  <View style={styles.infoIconContainer}>
+                    <Ionicons name="analytics-outline" size={28} color={Colors.primary} />
+                  </View>
+                  <Text style={styles.infoTitle}>Analizza</Text>
+                  <Text style={styles.infoText}>
+                    Comprendi le dinamiche delle tue relazioni
+                  </Text>
                 </View>
-                <Text style={styles.infoTitle}>Analizza</Text>
-                <Text style={styles.infoText}>
-                  Comprendi le dinamiche delle tue relazioni
-                </Text>
-              </View>
 
-              <View style={styles.infoCard}>
-                <View style={styles.infoIconContainer}>
-                  <Ionicons name="trending-up-outline" size={28} color={Colors.primary} />
+                <View style={styles.infoCard}>
+                  <View style={styles.infoIconContainer}>
+                    <Ionicons name="trending-up-outline" size={28} color={Colors.primary} />
+                  </View>
+                  <Text style={styles.infoTitle}>Evolvi</Text>
+                  <Text style={styles.infoText}>
+                    Monitora i cambiamenti nel tempo
+                  </Text>
                 </View>
-                <Text style={styles.infoTitle}>Evolvi</Text>
-                <Text style={styles.infoText}>
-                  Monitora i cambiamenti nel tempo
-                </Text>
               </View>
             </View>
           </View>
-        )}
-      </View>
 
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
-          <Text style={styles.continueButtonText}>Inizia il percorso</Text>
-          <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
-        </TouchableOpacity>
-      </View>
+          <View style={styles.footer}>
+            <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
+              <Text style={styles.continueButtonText}>Inizia il percorso</Text>
+              <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
     </SafeAreaView>
   );
 }
@@ -186,22 +221,20 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
   },
-  // Video section
-  videoSection: {
-    flex: 1,
-    justifyContent: 'center',
+  // Video section - vertical/portrait
+  videoScrollContent: {
+    paddingHorizontal: 24,
+    paddingBottom: 16,
+    alignItems: 'center',
   },
   videoContainer: {
+    width: VIDEO_WIDTH,
+    height: VIDEO_HEIGHT,
+    maxHeight: 520,
     borderRadius: 20,
     overflow: 'hidden',
     backgroundColor: '#000',
-    marginBottom: 24,
-    aspectRatio: 16 / 9,
-    shadowColor: Colors.cardShadow,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 1,
-    shadowRadius: 24,
-    elevation: 8,
+    marginBottom: 20,
   },
   video: {
     width: '100%',
@@ -209,21 +242,24 @@ const styles = StyleSheet.create({
   },
   textSection: {
     alignItems: 'center',
+    paddingHorizontal: 8,
   },
-  // Placeholder section (no video yet)
+  videoTitle: {
+    ...Typography.h2,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  videoSubtitle: {
+    ...Typography.bodySmall,
+    color: Colors.textLight,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  // Placeholder section (no video)
   placeholderSection: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  placeholderIcon: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: Colors.secondary + '15',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
   },
   title: {
     ...Typography.h1,
