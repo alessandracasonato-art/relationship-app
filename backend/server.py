@@ -1,5 +1,7 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -28,6 +30,11 @@ ACCESS_TOKEN_EXPIRE_DAYS = 30
 
 # Create the main app
 app = FastAPI(title="Relational Awareness Tool API")
+
+# Mount static files for video serving
+STATIC_DIR = ROOT_DIR / "static"
+STATIC_DIR.mkdir(exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -606,10 +613,25 @@ MONITORING_QUESTIONS = [
 @api_router.get("/intro-video")
 async def get_intro_video():
     """Get the intro video URL if uploaded"""
+    video_path = STATIC_DIR / "intro_video.mp4"
+    if video_path.exists():
+        return {"url": "/api/intro-video/stream", "has_video": True}
     video = await db.settings.find_one({"key": "intro_video"})
     if video and video.get("url"):
         return {"url": video["url"], "has_video": True}
     return {"url": None, "has_video": False}
+
+@api_router.get("/intro-video/stream")
+async def stream_intro_video():
+    """Stream the intro video file"""
+    video_path = STATIC_DIR / "intro_video.mp4"
+    if not video_path.exists():
+        raise HTTPException(status_code=404, detail="Video not found")
+    return FileResponse(
+        str(video_path),
+        media_type="video/mp4",
+        filename="intro_video.mp4",
+    )
 
 # ==================== AUTH ENDPOINTS ====================
 
