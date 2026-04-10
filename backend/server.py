@@ -622,12 +622,20 @@ async def get_intro_video():
 
 @api_router.get("/assets/{filename}")
 async def get_asset(filename: str):
-    """Serve static assets (icons, etc.)"""
+    """Serve static assets (icons, PDFs, etc.)"""
     from fastapi.responses import FileResponse as FR
     file_path = STATIC_DIR / filename
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="File not found")
-    return FR(str(file_path), media_type="image/png")
+    media_types = {
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".pdf": "application/pdf",
+        ".mp4": "video/mp4",
+    }
+    ext = file_path.suffix.lower()
+    media_type = media_types.get(ext, "application/octet-stream")
+    return FR(str(file_path), media_type=media_type)
 
 # ==================== AUTH ENDPOINTS ====================
 
@@ -1150,6 +1158,14 @@ async def get_resources():
     # If no resources, return default ones
     if not resources:
         default_resources = [
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Cosa succede davvero nelle relazioni",
+                "content_type": "ebook",
+                "description": "Un ebook per comprendere le dinamiche profonde delle relazioni e sviluppare una maggiore consapevolezza emotiva.",
+                "link": "/api/assets/ebook_relazioni.pdf",
+                "is_premium": False
+            },
             {
                 "id": str(uuid.uuid4()),
                 "title": "Comunicazione Efficace nelle Relazioni",

@@ -6,6 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Linking,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +28,7 @@ const TYPE_ICONS: Record<string, string> = {
   video: 'play-circle-outline',
   lettura: 'book-outline',
   strumento: 'construct-outline',
+  ebook: 'document-text-outline',
 };
 
 export default function Resources() {
@@ -55,10 +58,24 @@ export default function Resources() {
 
   const filters = [
     { key: 'all', label: 'Tutti' },
+    { key: 'ebook', label: 'Ebook' },
     { key: 'video', label: 'Video' },
     { key: 'lettura', label: 'Letture' },
     { key: 'strumento', label: 'Strumenti' },
   ];
+
+  const handleResourcePress = async (resource: Resource) => {
+    if (resource.is_premium) return;
+    if (resource.link) {
+      const baseUrl = process.env.EXPO_PUBLIC_BACKEND_URL || '';
+      const fullUrl = resource.link.startsWith('http') ? resource.link : `${baseUrl}${resource.link}`;
+      try {
+        await Linking.openURL(fullUrl);
+      } catch (error) {
+        Alert.alert('Errore', 'Impossibile aprire la risorsa');
+      }
+    }
+  };
 
   if (isLoading) {
     return (
@@ -111,7 +128,8 @@ export default function Resources() {
               styles.card,
               resource.is_premium && styles.cardPremium,
             ]}
-            disabled={resource.is_premium}
+            disabled={resource.is_premium && !resource.link}
+            onPress={() => handleResourcePress(resource)}
           >
             <View style={styles.cardIcon}>
               <Ionicons
@@ -137,7 +155,13 @@ export default function Resources() {
                     {resource.content_type.charAt(0).toUpperCase() + resource.content_type.slice(1)}
                   </Text>
                 </View>
-                {!resource.is_premium && (
+                {!resource.is_premium && resource.link && (
+                  <View style={styles.downloadBadge}>
+                    <Ionicons name="download-outline" size={14} color={Colors.secondary} />
+                    <Text style={styles.downloadText}>Scarica</Text>
+                  </View>
+                )}
+                {!resource.is_premium && !resource.link && (
                   <Ionicons name="arrow-forward" size={18} color={Colors.primary} />
                 )}
               </View>
@@ -282,6 +306,20 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textMuted,
     fontWeight: '500',
+  },
+  downloadBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.secondary + '15',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    gap: 4,
+  },
+  downloadText: {
+    ...Typography.caption,
+    color: Colors.secondary,
+    fontWeight: '600',
   },
   emptyState: {
     alignItems: 'center',
