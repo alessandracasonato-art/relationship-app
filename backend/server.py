@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -55,6 +55,10 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     name: Optional[str] = None
+
+class PasswordReset(BaseModel):
+    email: EmailStr
+    new_password: str
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -615,10 +619,59 @@ MONITORING_QUESTIONS = [
 @api_router.get("/intro-video")
 async def get_intro_video():
     """Get the intro video URL if uploaded"""
+    # Prefer optimized local video
+    video_path = STATIC_DIR / "intro_video_optimized.mp4"
+    if video_path.exists():
+        return {"url": "/api/intro-video/stream", "has_video": True}
     video = await db.settings.find_one({"key": "intro_video"})
     if video and video.get("url"):
         return {"url": video["url"], "has_video": True}
     return {"url": None, "has_video": False}
+
+@api_router.get("/intro-video/stream")
+async def stream_intro_video(request: Request):
+    """Stream the optimized intro video with range request support"""
+    from starlette.responses import StreamingResponse
+    video_path = STATIC_DIR / "intro_video_optimized.mp4"
+    if not video_path.exists():
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    file_size = video_path.stat().st_size
+    range_header = request.headers.get("range")
+    
+    if range_header:
+        # Parse range header
+        range_str = range_header.replace("bytes=", "")
+        range_parts = range_str.split("-")
+        start = int(range_parts[0])
+        end = int(range_parts[1]) if range_parts[1] else file_size - 1
+        content_length = end - start + 1
+        
+        def iter_file():
+            with open(video_path, "rb") as f:
+                f.seek(start)
+                remaining = content_length
+                while remaining > 0:
+                    chunk_size = min(65536, remaining)
+                    data = f.read(chunk_size)
+                    if not data:
+                        break
+                    remaining -= len(data)
+                    yield data
+        
+        return StreamingResponse(
+            iter_file(),
+            status_code=206,
+            media_type="video/mp4",
+            headers={
+                "Content-Range": f"bytes {start}-{end}/{file_size}",
+                "Accept-Ranges": "bytes",
+                "Content-Length": str(content_length),
+            }
+        )
+    else:
+        from fastapi.responses import FileResponse as FR
+        return FR(str(video_path), media_type="video/mp4")
 
 @api_router.get("/assets/{filename}")
 async def get_asset(filename: str):
@@ -716,6 +769,23 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         created_at=current_user["created_at"],
         has_completed_phase1=phase1 is not None
     )
+
+@api_router.post("/auth/reset-password")
+async def reset_password(data: PasswordReset):
+    user = await db.users.find_one({"email": data.email.lower()})
+    if not user:
+        raise HTTPException(status_code=404, detail="Email non trovata")
+    
+    if len(data.new_password) < 6:
+        raise HTTPException(status_code=400, detail="La password deve avere almeno 6 caratteri")
+    
+    new_hash = hash_password(data.new_password)
+    await db.users.update_one(
+        {"email": data.email.lower()},
+        {"$set": {"password_hash": new_hash}}
+    )
+    
+    return {"message": "Password aggiornata con successo"}
 
 # ==================== PHASE 1 ENDPOINTS ====================
 

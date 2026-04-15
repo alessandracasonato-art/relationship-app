@@ -66,7 +66,12 @@ export default function IntroVideo() {
     try {
       const res = await api.get('/intro-video');
       if (res.data.has_video && res.data.url) {
-        setVideoUrl(res.data.url);
+        const baseUrl = process.env.EXPO_PUBLIC_BACKEND_URL || '';
+        const fullUrl = res.data.url.startsWith('http')
+          ? res.data.url
+          : `${baseUrl}${res.data.url}`;
+        console.log('Video URL:', fullUrl);
+        setVideoUrl(fullUrl);
         setHasVideo(true);
       }
     } catch (error) {
